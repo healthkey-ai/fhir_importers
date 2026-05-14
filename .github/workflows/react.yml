@@ -9,7 +9,7 @@ jobs:
   prepare:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Set up node
       uses: actions/setup-node@v6
       with:
@@ -36,7 +36,7 @@ jobs:
     needs: [prepare]
     if: github.ref == 'refs/heads/dev'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
@@ -81,7 +81,7 @@ jobs:
     needs: [prepare]
     if: github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
@@ -126,7 +126,7 @@ jobs:
     needs: [prepare]
     if: github.ref == 'refs/heads/v2'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
