@@ -1,0 +1,213 @@
+name: backend
+
+on:
+  push:
+    branches: [ dev, main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.12'
+    - name: Cache pip
+      uses: actions/cache@v5
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}-v2
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          ${{ runner.os }}-
+    - uses: actions/cache@v5
+      with:
+        path: ${{ env.pythonLocation }}
+        key: ${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}-v2
+    - name: psycopg2 prerequisites
+      run: |
+        sudo apt-get -qq update && \
+        sudo apt-get -yqq install \
+          gcc \
+          libpq-dev \
+          gdal-bin \
+          libgdal-dev \
+          postgresql-client
+    - name: Install Dependencies
+      run: |
+        curl -sS https://bootstrap.pypa.io/get-pip.py | python3
+        pip install -U wheel
+        pip install -r requirements.txt
+  test:
+    runs-on: ubuntu-latest
+    needs: [build]
+    strategy:
+      matrix:
+        group: [1, 2, 3]
+    services:
+      postgres:
+        image: postgis/postgis:16-3.5  # we're on PG 16 on heroku for now
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cancer_bot${{ matrix.group }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+    - uses: actions/checkout@v6
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.12'
+    - uses: actions/cache@v5
+      with:
+        path: ${{ env.pythonLocation }}
+        key: ${{ runner.os }}-${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}-v2
+    - name: Set test env
+      run: |
+          cp .env_test .env
+          echo 'DATABASE_URL="postgres://postgres:postgres@localhost:5432/cancer_bot${{ matrix.group }}"' >> .env
+#          echo 'AIRFLOW_URL="mock"' >> .env
+    - name: apt search libgeos
+      run: |
+          sudo apt search libgeos
+    - name: psycopg2 prerequisites
+      run: |
+        sudo apt-get -qq update && \
+        sudo apt-get -yqq install \
+          gcc \
+          libpq-dev \
+          gdal-bin \
+          libgdal-dev \
+          libgeos3.12.1 \
+          libgeos-dev \
+          libgeos-c1v5 \
+          libgeos++-dev \
+          postgresql-client
+
+    - name: gdal-config --libs
+      run: |
+        sudo gdal-config --libs
+    - name: grep libgdal
+      run: |
+        sudo ls -la /usr/lib/x86_64-linux-gnu | grep libgdal
+    - name: geos-config --libs
+      run: |
+        sudo geos-config --libs
+    - name: grep geos
+      run: |
+        sudo ls -la /usr/lib/x86_64-linux-gnu | grep geos
+    - name: Debug list of modules
+      run: python -m pip freeze | grep -i django
+    - name: Debug list of modules
+      run: python3 -m pip freeze | grep -i django
+    - name: Check for missing migrations
+      run: ./manage.py makemigrations --check
+    - name: Run migrations
+      run: ./manage.py migrate
+    - name: Run Tests
+      run: |
+        python -m pytest --splits 3 --group ${{ matrix.group }}
+
+  docker_build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - name: Set up Docker auth to GCP
+      uses: 'google-github-actions/auth@v3'
+      with:
+        credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}'
+        create_credentials_file: true
+        export_environment_variables: true
+
+    - name: Configure Docker to use GCP credentials
+      run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+    - name: Build Docker image
+      run: |
+        echo "Tag: $GITHUB_SHA"
+        docker build -t us-central1-docker.pkg.dev/cancerbot-app/app/app:$GITHUB_SHA .
+
+    - name: Push Docker image
+      run: |
+        docker push us-central1-docker.pkg.dev/cancerbot-app/app/app:$GITHUB_SHA
+
+  deploy_staging:
+    runs-on: ubuntu-latest
+    needs: [docker_build]
+    if: github.ref == 'refs/heads/dev'
+    steps:
+    - uses: actions/checkout@v6
+    - name: Set up SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Deploy to staging
+      run: |
+        ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST <<EOF
+          set -e
+          cd /apps/cancerbot-staging
+          gcloud auth activate-service-account --key-file=${GCP_KEY_FILE}
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+          export IMAGE_TAG=${GITHUB_SHA}
+          echo "IMAGE_TAG=\$IMAGE_TAG"
+          docker compose pull
+          docker compose run --rm migrate && docker compose up -d --remove-orphans && docker compose ps
+          docker exec -it cancerbot-staging-django-1 python3 manage.py collectstatic --noinput
+        EOF
+      env:
+        SSH_HOST: ${{ secrets.SSH_HOST }}
+        SSH_USER: ${{ secrets.SSH_USER }}
+        GCP_KEY_FILE: ${{ secrets.GCP_KEY_FILE }}
+
+  deploy_prod:
+    runs-on: ubuntu-latest
+    needs: [docker_build]
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v6
+    - name: Set up SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Deploy to production
+      run: |
+        ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST <<EOF
+          set -e
+          cd /apps/cancerbot-prod
+          gcloud auth activate-service-account --key-file=${GCP_KEY_FILE}
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+          export IMAGE_TAG=${GITHUB_SHA}
+          echo "IMAGE_TAG=\$IMAGE_TAG"
+          docker compose pull
+          docker compose run --rm migrate && docker compose up -d --remove-orphans && docker compose ps
+          docker exec -it cancerbot-prod-django-1 python3 manage.py collectstatic --noinput
+        EOF
+      env:
+        SSH_HOST: ${{ secrets.SSH_HOST }}
+        SSH_USER: ${{ secrets.SSH_USER }}
+        GCP_KEY_FILE: ${{ secrets.GCP_KEY_FILE }}

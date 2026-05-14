@@ -1,0 +1,7 @@
+AIRFLOW_POOL_GREAT_BACKGROUND = "background_pool"
+
+AIRFLOW_POOL_NIGHT_BACKGROUND = "background_nightly"
+
+AIRFLOW_POOL_SYSTEM = "system"
+
+AIRFLOW_POOL_REALTIME = "realtime"
