@@ -19,7 +19,7 @@ jobs:
       run: cp .env_test .env
     - name: Cache node_modules
       id: cache-node-modules
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ui/node_modules
         key: ${{ runner.os }}-node_modules-${{ hashFiles('**/package-lock.json') }}
@@ -42,7 +42,7 @@ jobs:
         with:
           node-version: '20'
       - name: Restore node_modules from cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ui/node_modules
           key: ${{ runner.os }}-node_modules-${{ hashFiles('**/package-lock.json') }}
@@ -87,7 +87,7 @@ jobs:
         with:
           node-version: '20'
       - name: Restore node_modules from cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ui/node_modules
           key: ${{ runner.os }}-node_modules-${{ hashFiles('**/package-lock.json') }}
