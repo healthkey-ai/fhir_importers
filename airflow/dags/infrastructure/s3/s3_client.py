@@ -1,7 +1,7 @@
 import logging
 from io import StringIO
 import json
-import botocore
+import botocore.session
 import urllib.parse
 import pandas as pd
 from typing import Dict, List, Any, Tuple

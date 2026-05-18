@@ -1,0 +1,9 @@
+/patients
+.idea
+.venv
+__pycache__
+*.pyc
+.env
+.python-version
+CLAUDE.md
+/legacy

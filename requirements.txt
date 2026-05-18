@@ -1,0 +1,32 @@
+# Runtime dependencies for the FHIR ingestion pipeline.
+# Versions are pinned to what cancerbot-etl runs in production, so the two
+# repos can share a venv during cross-debugging.
+
+# --- Core ---------------------------------------------------------------
+pydantic==2.11.7
+SQLAlchemy==1.4.54
+pandas==2.1.4
+psycopg2-binary==2.9.10
+
+# --- AWS (S3 artifact staging via infrastructure/s3) --------------------
+boto3==1.38.27
+botocore==1.38.27
+
+# --- HTTP (infrastructure/airflow_client) -------------------------------
+requests==2.32.3
+
+# --- Airflow (DAG + tasks) ----------------------------------------------
+# Pinning to the same Airflow major as cancerbot. The Postgres provider is
+# only needed by `tasks/fhir_ingest_tasks.py` to get an Engine from an
+# Airflow connection — the CLI side uses `infrastructure.postgres` directly.
+apache-airflow==2.11.0
+apache-airflow-providers-postgres==6.2.0
+
+# --- Legacy / trial-side infrastructure ---------------------------------
+# These cover modules that were brought over from the trial ETL repo (see
+# CLAUDE.md) and aren't part of the FHIR path yet. They stay so that
+# `import infrastructure.repository` still works as-is. Drop once those
+# modules are pruned or split off.
+opik==1.9.21
+typeguard==4.4.2
+redis==7.3.0

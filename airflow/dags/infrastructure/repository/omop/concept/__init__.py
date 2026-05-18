@@ -1,0 +1,1 @@
+from infrastructure.repository.omop.concept.repository import ConceptRepository

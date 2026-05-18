@@ -1,0 +1,2 @@
+from infrastructure.repository.omop.person.repository import PersonRepository
+from infrastructure.repository.omop.person.implementation import PersonRepositoryImplementation
