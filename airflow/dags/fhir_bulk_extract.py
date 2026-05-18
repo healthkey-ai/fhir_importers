@@ -65,7 +65,7 @@ _PARAMS = {
         enum=["PATIENT_SELF", "ADMIN_CORRECTION", "EHR_SYNC", "DOCUMENT_EXTRACTION"],
         default="EHR_SYNC",
     ),
-    "provenance_source_user_id": Param(type="string", default=""),
+    "provenance_source_user_id": Param(type=["string", "null"], default=None),
     "provenance_target_patient_id": Param(type=["string", "null"], default=None),
     "provenance_organization_id": Param(type=["integer", "null"], default=None),
     "provenance_modification_reason": Param(type=["string", "null"], default=None),

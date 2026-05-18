@@ -14,6 +14,8 @@ class AirflowDag(StrEnum):
     FHIR_INGEST = "fhir_ingest"
     FHIR_EXTRACT = "fhir_extract"
     FHIR_BULK_EXTRACT = "fhir_bulk_extract"
+    FHIR_TOKEN_MONITOR = "fhir_token_monitor"
+    FHIR_INCREMENTAL_SYNC = "fhir_incremental_sync"
 
 
 class AirflowDagRunState(StrEnum):

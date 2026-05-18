@@ -37,6 +37,22 @@ def _build_provenance(provenance_dict: dict[str, Any]) -> ProvenanceContext:
     )
 
 
+def log_artifact(label: str, artifacts, artifact_key: ArtifactKey) -> None:
+    """Emit a one-line task log entry pointing at an artifact, with both
+    the `s3://` URI (for boto3 / awscli consumers) and the `https://` URL
+    (clickable from the Airflow task log in the UI).
+
+    Shared between every task that uploads or references an artifact so
+    "where did the bundle land?" is one click away from the run page.
+    """
+    _logger.info(
+        "%s artifact:\n  s3:    %s\n  https: %s",
+        label,
+        artifacts.get_s3_url(artifact_key),
+        artifacts.get_web_url(artifact_key),
+    )
+
+
 @task(pool=AIRFLOW_POOL_GREAT_BACKGROUND, priority_weight=250, weight_rule="upstream")
 def ingest_artifact(
     artifact_key: ArtifactKey,
@@ -58,6 +74,7 @@ def ingest_artifact(
     provenance = _build_provenance(validated_params["provenance"])
     fhir_version = FhirVersion(validated_params["fhir_version"])
 
+    log_artifact("Input bundle", artifacts, artifact_key)
     result = service.ingest_from_artifact(
         artifact_key=artifact_key,
         fhir_version=fhir_version,
@@ -78,4 +95,5 @@ def ingest_artifact(
         key="fhir_ingestion_result.json",
     )
     artifacts.upload_json(result_artifact_key, result.model_dump(mode="json"))
+    log_artifact("Ingestion result", artifacts, result_artifact_key)
     return result_artifact_key

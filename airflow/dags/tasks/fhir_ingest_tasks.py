@@ -25,6 +25,7 @@ from infrastructure.airflow_db.consts import AIRFLOW_POOL_GREAT_BACKGROUND
 from services.artifact import ArtifactKey
 from services.fhir_parsing import FhirVersion
 from services.service_locator import ServiceLocator
+from tasks.fhir_common_tasks import log_artifact
 
 _logger = logging.getLogger(__name__)
 
@@ -52,10 +53,15 @@ def validate_params(**kwargs) -> dict[str, Any]:
 
     fhir_version = FhirVersion(params.get("fhir_version") or "r4")
 
+    # Treat empty string and the literal "None" string the same as missing —
+    # Airflow's trigger UI has historically submitted the string "None" when
+    # null appeared inside a Param `enum=[...]`. Defend in depth even though
+    # the Param schema no longer declares such an enum.
     provenance_source_value = params.get("provenance_source")
-    provenance_source: ProvenanceSource | None = (
-        ProvenanceSource(provenance_source_value) if provenance_source_value else None
-    )
+    if provenance_source_value in (None, "", "None"):
+        provenance_source: ProvenanceSource | None = None
+    else:
+        provenance_source = ProvenanceSource(provenance_source_value)
     modification_reason = params.get("provenance_modification_reason")
     if provenance_source == ProvenanceSource.ADMIN_CORRECTION and not modification_reason:
         raise ValueError(
@@ -103,4 +109,5 @@ def stage_inline_bundle(validated_params: dict[str, Any], **kwargs) -> ArtifactK
         key="staged_bundle.json",
     )
     artifacts.upload_json(new_artifact_key, bundle)
+    log_artifact("Staged inline bundle", artifacts, new_artifact_key)
     return new_artifact_key

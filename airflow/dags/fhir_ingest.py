@@ -39,15 +39,22 @@ _PARAMS = {
             "per-resource handlers under services/fhir_parsing/handlers/<version>/."
         ),
     ),
+    # Enum NOT declared at the schema level on purpose: Airflow's trigger UI
+    # mis-handles `null` inside `enum=[...]`, rendering it as the literal
+    # string "None" and submitting it back as such. The runtime validator
+    # in `validate_params` enforces the enum below; that path is robust.
     "provenance_source": Param(
         type=["string", "null"],
         default=None,
-        enum=[None, "PATIENT_SELF", "ADMIN_CORRECTION", "EHR_SYNC", "DOCUMENT_EXTRACTION"],
-        description="`provenance_record.source` value. Stamped on every OMOP row the run touches.",
+        description=(
+            "`provenance_record.source` — one of PATIENT_SELF, ADMIN_CORRECTION, "
+            "EHR_SYNC, DOCUMENT_EXTRACTION. Leave null to skip provenance writes "
+            "entirely. Stamped on every OMOP row the run touches."
+        ),
     ),
     "provenance_source_user_id": Param(
-        type="string",
-        default="",
+        type=["string", "null"],
+        default=None,
         description="`provenance_record.source_user_id` — operator id (string) for the audit trail.",
     ),
     "provenance_target_patient_id": Param(

@@ -19,6 +19,7 @@ from services.artifact import ArtifactKey
 from services.fhir_extract import SyncMode
 from services.fhir_parsing import FhirVersion, ProvenanceContext
 from services.service_locator import ServiceLocator
+from tasks.fhir_common_tasks import log_artifact
 
 _logger = logging.getLogger(__name__)
 
@@ -88,6 +89,7 @@ def extract_bundle(validated_params: dict[str, Any], **kwargs) -> ArtifactKey:
         mode=SyncMode(validated_params["sync_mode"]),
         artifact_key=artifact_key,
     )
+    log_artifact("Extracted bundle (paginated $everything)", artifacts, artifact_key)
     return artifact_key
 
 

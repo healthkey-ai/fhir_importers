@@ -63,8 +63,8 @@ _PARAMS = {
         description="`provenance_record.source` for every OMOP row this run writes.",
     ),
     "provenance_source_user_id": Param(
-        type="string",
-        default="",
+        type=["string", "null"],
+        default=None,
     ),
     "provenance_target_patient_id": Param(
         type=["string", "null"],

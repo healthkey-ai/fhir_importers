@@ -2,6 +2,7 @@ import os
 
 from sqlalchemy.engine import Engine
 
+from infrastructure.airflow_client import AirflowClient, AirflowClientImplementation
 from infrastructure.oauth import SmartTokenRefresher, TokenCipher
 from infrastructure.postgres import create_sqlalchemy_engine
 from infrastructure.repository.fhir_connection import (
@@ -28,7 +29,12 @@ from services.fhir_parsing.bundle_grouper import BundleGrouper
 from services.fhir_parsing.handlers.registry import build_default_registry
 from services.fhir_parsing.writers import OmopWriter
 
-_DEFAULT_ARTIFACTS_BUCKET = "healthkey-artifacts"
+# Shared with cancerbot-etl. Artifact keys are prefixed by DAG id, so the
+# two repos' namespaces don't overlap (cancerbot dag ids start with `trial_*`
+# / `registry_*`; healthkey dag ids start with `fhir_*`). Override per
+# environment via the HEALTHKEY_ARTIFACTS_BUCKET env var if you ever want
+# to split them.
+_DEFAULT_ARTIFACTS_BUCKET = "cancerbot-artifacts"
 
 
 class ServiceLocator:
@@ -121,4 +127,18 @@ class ServiceLocator:
             institution_repository=self.get_institution_repository(),
             token_refresher=self.get_smart_token_refresher(),
             artifact_service=self.get_artifact_service(),
+        )
+
+    @staticmethod
+    def get_airflow_client() -> AirflowClient:
+        """Used by the `fhir_incremental_sync` scheduled DAG to fan out
+        per-connection extract runs against our own Airflow instance.
+
+        Env vars: AIRFLOW_CLIENT_URL / AIRFLOW_CLIENT_USER / AIRFLOW_CLIENT_PASSWORD.
+        Same env-var names as cancerbot-etl so a shared shell profile works.
+        """
+        return AirflowClientImplementation(
+            airflow_url=os.environ["AIRFLOW_CLIENT_URL"],
+            airflow_username=os.environ["AIRFLOW_CLIENT_USER"],
+            airflow_password=os.environ["AIRFLOW_CLIENT_PASSWORD"],
         )

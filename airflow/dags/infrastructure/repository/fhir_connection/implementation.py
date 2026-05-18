@@ -19,7 +19,10 @@ from sqlalchemy.engine import Connection, Engine
 import infrastructure.repository.fhir_connection.sql as sql
 from entities.fhir.connection import FhirConnection, FhirConnectionStatus
 from infrastructure.repository.base_repository import BaseRepository
-from infrastructure.repository.fhir_connection.repository import FhirConnectionRepository
+from infrastructure.repository.fhir_connection.repository import (
+    DueConnectionRow,
+    FhirConnectionRepository,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -101,6 +104,38 @@ class FhirConnectionRepositoryImplementation(FhirConnectionRepository, BaseRepos
                 attempted_at=attempted_at,
                 error=error[:2000],
             )
+
+    # ---- scheduler queries ----------------------------------------------
+
+    def flag_expiring_tokens(self, *, days_until_expiry: int) -> int:
+        with self._engine.begin() as conn:
+            result = conn.execute(
+                text(sql.FLAG_EXPIRING_TOKENS),
+                {"days": str(days_until_expiry)},
+            )
+            return int(result.rowcount or 0)
+
+    def list_due_for_sync(
+        self,
+        *,
+        min_age_hours: int,
+        limit: int = 1000,
+    ) -> list[DueConnectionRow]:
+        with self._engine.connect() as conn:
+            result = conn.execute(
+                text(sql.SELECT_DUE_FOR_SYNC),
+                {"min_age_hours": str(min_age_hours), "limit": limit},
+            )
+            return [
+                DueConnectionRow(
+                    connection_id=int(row["connection_id"]),
+                    institution_id=int(row["institution_id"]),
+                    institution_slug=row["institution_slug"],
+                    supports_bulk_export=bool(row["supports_bulk_export"]),
+                    last_successful_sync=row["last_successful_sync"],
+                )
+                for row in (dict(r._mapping) for r in result)
+            ]
 
 
 def _row_to_entity(row) -> FhirConnection | None:

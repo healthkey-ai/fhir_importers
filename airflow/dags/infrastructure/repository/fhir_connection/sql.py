@@ -51,3 +51,37 @@ UPDATE fhir_connection SET
     updated_at = NOW()
 WHERE id = :id
 """
+
+# --- scheduler-only queries -------------------------------------------------
+
+# Flag rows whose access_token will expire within :days days as expiring_soon.
+# Only touch rows currently in `connected` — we don't want to "downgrade"
+# rows the SmartTokenRefresher already flipped to needs_reauth.
+FLAG_EXPIRING_TOKENS = """
+UPDATE fhir_connection SET
+    status = 'expiring_soon',
+    updated_at = NOW()
+WHERE status = 'connected'
+  AND expires_at < NOW() + (:days || ' days')::interval
+"""
+
+# Connections due for incremental sync. Joined with fhir_institution so the
+# scheduler can dispatch fhir_extract vs fhir_bulk_extract per row.
+SELECT_DUE_FOR_SYNC = """
+SELECT
+    c.id AS connection_id,
+    c.institution_id,
+    i.slug AS institution_slug,
+    i.supports_bulk_export,
+    c.last_successful_sync
+FROM fhir_connection c
+JOIN fhir_institution i ON i.id = c.institution_id
+WHERE c.status IN ('connected', 'expiring_soon')
+  AND i.is_active
+  AND (
+        c.last_successful_sync IS NULL
+        OR c.last_successful_sync < NOW() - (:min_age_hours || ' hours')::interval
+      )
+ORDER BY c.last_successful_sync ASC NULLS FIRST, c.id ASC
+LIMIT :limit
+"""

@@ -23,6 +23,7 @@ from services.artifact import ArtifactKey
 from services.fhir_extract import SyncMode
 from services.fhir_parsing import FhirVersion
 from services.service_locator import ServiceLocator
+from tasks.fhir_common_tasks import log_artifact
 
 _logger = logging.getLogger(__name__)
 
@@ -95,4 +96,5 @@ def bulk_extract_bundle(validated_params: dict[str, Any], **kwargs) -> ArtifactK
         resource_types=validated_params.get("resource_types") or None,
         poll_timeout_seconds=validated_params.get("poll_timeout_seconds", 3600),
     )
+    log_artifact("Extracted bundle ($export NDJSON, stitched)", artifacts, artifact_key)
     return artifact_key
