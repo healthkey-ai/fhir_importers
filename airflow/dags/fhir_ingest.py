@@ -4,7 +4,8 @@ from airflow.decorators import dag
 from airflow.models.param import Param
 
 from infrastructure.airflow_db.consts import AIRFLOW_POOL_GREAT_BACKGROUND
-from tasks.fhir_ingest_tasks import ingest_bundle, validate_params
+from tasks.fhir_common_tasks import ingest_artifact
+from tasks.fhir_ingest_tasks import stage_inline_bundle, validate_params
 
 _logger = logging.getLogger(__name__)
 
@@ -89,9 +90,12 @@ def _fhir_ingest_dag():
     validated = validate_params.override(
         pool=AIRFLOW_POOL_GREAT_BACKGROUND, priority_weight=300000
     )()
-    ingest_bundle.override(
+    artifact = stage_inline_bundle.override(
         pool=AIRFLOW_POOL_GREAT_BACKGROUND, priority_weight=300000
     )(validated_params=validated)
+    ingest_artifact.override(
+        pool=AIRFLOW_POOL_GREAT_BACKGROUND, priority_weight=300000
+    )(artifact_key=artifact, validated_params=validated)
 
 
 fhir_ingest = _fhir_ingest_dag()

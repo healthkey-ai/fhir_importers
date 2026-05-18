@@ -174,3 +174,10 @@ class PatientResourceHandler(AbstractResourceHandler):
             value = parser(ext)
             if value is not None:
                 payload.patient_info_patch[field] = value
+
+        # Default units when weight/height arrive without explicit units
+        # (mirrors the Django upload_fhir view: it stamps 'kg'/'cm').
+        if "weight" in payload.patient_info_patch and "weight_units" not in payload.patient_info_patch:
+            payload.patient_info_patch["weight_units"] = "kg"
+        if "height" in payload.patient_info_patch and "height_units" not in payload.patient_info_patch:
+            payload.patient_info_patch["height_units"] = "cm"

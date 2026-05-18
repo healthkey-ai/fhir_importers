@@ -1,5 +1,6 @@
 from infrastructure.repository.omop.person.repository import PersonRepository
 from infrastructure.repository.omop.person.implementation import PersonRepositoryImplementation
 from infrastructure.repository.omop.concept.repository import ConceptRepository
+from infrastructure.repository.omop.concept.implementation import ConceptRepositoryImplementation
 from infrastructure.repository.omop.provenance.repository import ProvenanceRepository
 from infrastructure.repository.omop.provenance.implementation import ProvenanceRepositoryImplementation

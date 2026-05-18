@@ -1,0 +1,2 @@
+from infrastructure.repository.institution.repository import InstitutionRepository
+from infrastructure.repository.institution.implementation import InstitutionRepositoryImplementation

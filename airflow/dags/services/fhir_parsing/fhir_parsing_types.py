@@ -21,6 +21,7 @@ class FhirResourceType(StrEnum):
     OBSERVATION = "Observation"
     MEDICATION_STATEMENT = "MedicationStatement"
     MEDICATION_REQUEST = "MedicationRequest"
+    MEDICATION_ORDER = "MedicationOrder"  # DSTU2 only
     PROCEDURE = "Procedure"
 
 

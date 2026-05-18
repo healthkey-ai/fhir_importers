@@ -1,3 +1,19 @@
+"""Tasks for the `fhir_ingest` DAG (DAG 1 — parse an S3-staged bundle).
+
+This DAG's job is "given a FHIR Bundle, write OMOP rows". The bundle
+arrives in one of two shapes (mutually exclusive):
+
+  - `artifact_key`: already staged in S3 (the cancerbot-etl pattern, also
+    used by the bulk/extract DAGs when they hand off to this code path).
+  - `bundle`: inline JSON object in the DAG conf (the Django
+    `upload_fhir` view passes this for direct file uploads — small bundles).
+
+When the bundle is inline, this DAG stages it into S3 as its first task so
+the rest of the pipeline operates uniformly on artifact keys. The terminal
+ingest task is shared with the other FHIR DAGs (`fhir_common_tasks.ingest_artifact`).
+"""
+from __future__ import annotations
+
 import logging
 from typing import Any
 
@@ -7,25 +23,23 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from entities.omop.provenance_record import ProvenanceSource
 from infrastructure.airflow_db.consts import AIRFLOW_POOL_GREAT_BACKGROUND
 from services.artifact import ArtifactKey
-from services.fhir_parsing import FhirVersion, ProvenanceContext
+from services.fhir_parsing import FhirVersion
 from services.service_locator import ServiceLocator
 
 _logger = logging.getLogger(__name__)
 
-# TODO: confirm this matches the Airflow connection that points at the Django app's DB.
 _POSTGRES_CONN_ID = "postgres-healthkey-etl"
 
 
 @task(pool=AIRFLOW_POOL_GREAT_BACKGROUND, priority_weight=250, weight_rule="upstream")
 def validate_params(**kwargs) -> dict[str, Any]:
-    """Validate `dag_run.conf` and return a normalized dict for downstream tasks.
-
-    The caller supplies exactly one of `bundle` (inline JSON) or `artifact_key`
-    (S3 path). Django's `upload_fhir` endpoint passes the bundle inline; future
-    bulk-upload flows would stage to S3 first.
-    """
+    """Validate `dag_run.conf`. Caller supplies exactly one of `artifact_key`
+    or `bundle` (inline JSON object). Provenance defaults to no source."""
     params = kwargs["params"]
-    _logger.info("Params: %s", {k: ("<bundle>" if k == "bundle" else v) for k, v in params.items()})
+    _logger.info(
+        "Params: %s",
+        {k: ("<bundle>" if k == "bundle" else v) for k, v in params.items()},
+    )
 
     artifact_key = params.get("artifact_key")
     bundle = params.get("bundle")
@@ -36,8 +50,7 @@ def validate_params(**kwargs) -> dict[str, Any]:
     if bundle is not None and not isinstance(bundle, dict):
         raise ValueError("`bundle` must be a JSON object (FHIR Bundle resource)")
 
-    fhir_version_value = params.get("fhir_version") or "r4"
-    fhir_version = FhirVersion(fhir_version_value)  # raises on unknown version
+    fhir_version = FhirVersion(params.get("fhir_version") or "r4")
 
     provenance_source_value = params.get("provenance_source")
     provenance_source: ProvenanceSource | None = (
@@ -65,58 +78,29 @@ def validate_params(**kwargs) -> dict[str, Any]:
 
 
 @task(pool=AIRFLOW_POOL_GREAT_BACKGROUND, priority_weight=250, weight_rule="upstream")
-def ingest_bundle(validated_params: dict[str, Any], **kwargs) -> ArtifactKey:
-    """Run the FHIR ingestion pipeline against the bundle in `validated_params`.
+def stage_inline_bundle(validated_params: dict[str, Any], **kwargs) -> ArtifactKey:
+    """Resolve the artifact_key the ingest step will read.
 
-    Sources the bundle inline (`bundle` key) or from S3 (`artifact_key`),
-    runs it through `FhirParsingService`, and uploads the
-    `FhirIngestionResult` as a follow-up artifact. Returns that artifact's
-    S3 key; pollers can fetch it to surface ingestion status to callers.
+    - If the caller supplied an `artifact_key`, pass it through.
+    - If the caller supplied an inline `bundle`, upload it to S3 first so
+      the rest of the pipeline operates uniformly on artifact keys.
     """
-    pg_hook = PostgresHook(postgres_conn_id=_POSTGRES_CONN_ID)
-    engine = pg_hook.get_sqlalchemy_engine()
-    locator = ServiceLocator(engine)
-
-    service = locator.get_fhir_parsing_service()
-    artifacts = locator.get_artifact_service()
-
-    provenance_dict = validated_params["provenance"]
-    provenance = ProvenanceContext(
-        source=ProvenanceSource(provenance_dict["source"]) if provenance_dict["source"] else None,
-        source_user_id=provenance_dict.get("source_user_id") or "",
-        target_patient_id=provenance_dict.get("target_patient_id"),
-        organization_id=provenance_dict["organization_id"],
-        modification_reason=provenance_dict["modification_reason"],
-    )
-    fhir_version = FhirVersion(validated_params["fhir_version"])
+    artifact_key = validated_params.get("artifact_key")
+    if artifact_key:
+        return artifact_key
 
     bundle = validated_params.get("bundle")
-    if bundle is not None:
-        result = service.ingest_from_bundle(
-            bundle=bundle,
-            fhir_version=fhir_version,
-            provenance=provenance,
-        )
-    else:
-        result = service.ingest_from_artifact(
-            artifact_key=validated_params["artifact_key"],
-            fhir_version=fhir_version,
-            provenance=provenance,
-        )
+    if bundle is None:
+        # `validate_params` already enforces this, but defend in depth.
+        raise ValueError("Neither artifact_key nor bundle is present in validated_params")
 
-    _logger.info(
-        "FHIR ingestion finished: created=%d updated=%d errors=%d patients=%d",
-        result.created_count,
-        result.updated_count,
-        len(result.errors),
-        len(result.patients),
-    )
-
-    result_artifact_key = artifacts.build_artifact_key(
+    locator = ServiceLocator(PostgresHook(postgres_conn_id=_POSTGRES_CONN_ID).get_sqlalchemy_engine())
+    artifacts = locator.get_artifact_service()
+    new_artifact_key = artifacts.build_artifact_key(
         dag_id=kwargs["dag"].dag_id,
         run_id=kwargs["run_id"],
         task_id=kwargs["task"].task_id,
-        key="fhir_ingestion_result.json",
+        key="staged_bundle.json",
     )
-    artifacts.upload_json(result_artifact_key, result.model_dump(mode="json"))
-    return result_artifact_key
+    artifacts.upload_json(new_artifact_key, bundle)
+    return new_artifact_key

@@ -15,6 +15,13 @@ botocore==1.38.27
 # --- HTTP (infrastructure/airflow_client) -------------------------------
 requests==2.32.3
 
+# --- SMART on FHIR client auth (private_key_jwt) ------------------------
+# JWT signing for client_assertion when calling EHR /oauth2/token endpoints
+# (Epic, Cerner, etc.). Fernet for token-at-rest encryption is already
+# available transitively via apache-airflow (which uses cryptography for
+# its own secret encryption).
+pyjwt[crypto]==2.9.0
+
 # --- Airflow (DAG + tasks) ----------------------------------------------
 # Pinning to the same Airflow major as cancerbot. The Postgres provider is
 # only needed by `tasks/fhir_ingest_tasks.py` to get an Engine from an

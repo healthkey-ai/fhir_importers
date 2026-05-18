@@ -12,6 +12,8 @@ class AirflowDag(StrEnum):
     REGISTRY_EXTRACT = "registry_extract"
     TRIAL_EXTRACT_SCHEDULE_OF_ASSESSMENT = "trial_extract_schedule_of_assessment"
     FHIR_INGEST = "fhir_ingest"
+    FHIR_EXTRACT = "fhir_extract"
+    FHIR_BULK_EXTRACT = "fhir_bulk_extract"
 
 
 class AirflowDagRunState(StrEnum):

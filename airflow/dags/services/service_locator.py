@@ -2,9 +2,19 @@ import os
 
 from sqlalchemy.engine import Engine
 
+from infrastructure.oauth import SmartTokenRefresher, TokenCipher
 from infrastructure.postgres import create_sqlalchemy_engine
+from infrastructure.repository.fhir_connection import (
+    FhirConnectionRepository,
+    FhirConnectionRepositoryImplementation,
+)
+from infrastructure.repository.institution import (
+    InstitutionRepository,
+    InstitutionRepositoryImplementation,
+)
 from infrastructure.repository.omop import (
     ConceptRepository,
+    ConceptRepositoryImplementation,
     PersonRepository,
     PersonRepositoryImplementation,
     ProvenanceRepository,
@@ -12,6 +22,7 @@ from infrastructure.repository.omop import (
 )
 from infrastructure.s3 import S3Client
 from services.artifact import ArtifactService
+from services.fhir_extract import FhirExtractService
 from services.fhir_parsing import FhirParsingService
 from services.fhir_parsing.bundle_grouper import BundleGrouper
 from services.fhir_parsing.handlers.registry import build_default_registry
@@ -63,6 +74,7 @@ class ServiceLocator:
     def get_omop_writer(self) -> OmopWriter:
         return OmopWriter(
             person_repository=self.get_person_repository(),
+            concept_repository=self.get_concept_repository(),
             provenance_repository=self.get_provenance_repository(),
         )
 
@@ -82,8 +94,31 @@ class ServiceLocator:
         return ProvenanceRepositoryImplementation(self._engine)
 
     def get_concept_repository(self) -> ConceptRepository:
-        raise NotImplementedError(
-            "ConceptRepository adapter is not yet wired. Implement "
-            "infrastructure/repository/omop/concept/implementation.py and "
-            "return it from ServiceLocator.get_concept_repository()."
+        return ConceptRepositoryImplementation(self._engine)
+
+    # --- SMART on FHIR auth + extract -----------------------------------
+
+    def get_fhir_connection_repository(self) -> FhirConnectionRepository:
+        return FhirConnectionRepositoryImplementation(self._engine)
+
+    def get_institution_repository(self) -> InstitutionRepository:
+        return InstitutionRepositoryImplementation(self._engine)
+
+    @staticmethod
+    def get_token_cipher() -> TokenCipher:
+        return TokenCipher.from_env()
+
+    def get_smart_token_refresher(self) -> SmartTokenRefresher:
+        return SmartTokenRefresher(
+            connection_repository=self.get_fhir_connection_repository(),
+            institution_repository=self.get_institution_repository(),
+            token_cipher=self.get_token_cipher(),
+        )
+
+    def get_fhir_extract_service(self) -> FhirExtractService:
+        return FhirExtractService(
+            connection_repository=self.get_fhir_connection_repository(),
+            institution_repository=self.get_institution_repository(),
+            token_refresher=self.get_smart_token_refresher(),
+            artifact_service=self.get_artifact_service(),
         )
