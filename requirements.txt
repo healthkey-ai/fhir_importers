@@ -10,7 +10,7 @@ psycopg2-binary==2.9.10
 
 # --- AWS (S3 artifact staging via infrastructure/s3) --------------------
 boto3==1.38.27
-botocore==1.38.27
+botocore==1.43.12
 
 # --- HTTP (infrastructure/airflow_client) -------------------------------
 requests==2.32.3
