@@ -20,7 +20,7 @@ requests==2.32.3
 # (Epic, Cerner, etc.). Fernet for token-at-rest encryption is already
 # available transitively via apache-airflow (which uses cryptography for
 # its own secret encryption).
-pyjwt[crypto]==2.9.0
+pyjwt[crypto]==2.12.1
 
 # --- Airflow (DAG + tasks) ----------------------------------------------
 # Pinning to the same Airflow major as cancerbot. The Postgres provider is
