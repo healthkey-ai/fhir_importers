@@ -5,7 +5,7 @@
 # --- Core ---------------------------------------------------------------
 pydantic==2.11.7
 SQLAlchemy==1.4.54
-pandas==2.1.4
+pandas==3.0.3
 psycopg2-binary==2.9.10
 
 # --- AWS (S3 artifact staging via infrastructure/s3) --------------------
