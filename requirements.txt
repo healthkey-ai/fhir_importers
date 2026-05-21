@@ -6,7 +6,7 @@
 pydantic==2.11.7
 SQLAlchemy==1.4.54
 pandas==2.1.4
-psycopg2-binary==2.9.10
+psycopg2-binary==2.9.12
 
 # --- AWS (S3 artifact staging via infrastructure/s3) --------------------
 boto3==1.38.27
