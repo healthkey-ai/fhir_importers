@@ -36,4 +36,4 @@ apache-airflow-providers-postgres==6.2.0
 # modules are pruned or split off.
 opik==1.9.21
 typeguard==4.4.2
-redis==7.3.0
+redis==7.4.0
