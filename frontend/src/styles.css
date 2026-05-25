@@ -1,0 +1,176 @@
+:root {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
+  color: #1a202c;
+  background: #f7fafc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: #3182ce;
+}
+
+.container {
+  max-width: 640px;
+  margin: 4rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+h1 {
+  margin-top: 0;
+}
+
+.muted {
+  color: #4a5568;
+}
+
+label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: 600;
+}
+
+select,
+button,
+.combobox-input {
+  font: inherit;
+  display: block;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  background: white;
+  min-width: 240px;
+}
+
+.combobox {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+}
+
+.combobox-input {
+  width: 100%;
+  outline: none;
+}
+
+.combobox-input:focus {
+  border-color: #3182ce;
+  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.18);
+}
+
+.combobox-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  margin: 0;
+  padding: 0.25rem 0;
+  list-style: none;
+  background: white;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.combobox-option {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+
+.combobox-option.highlighted,
+.combobox-option:hover {
+  background: #ebf4ff;
+}
+
+.combobox-option-title {
+  font-weight: 500;
+}
+
+.combobox-option-alias {
+  font-size: 0.8em;
+  color: #718096;
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+
+.combobox-empty {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  padding: 0.5rem 0.75rem;
+  background: white;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  color: #718096;
+  font-style: italic;
+  z-index: 10;
+}
+
+button {
+  margin-top: 1.5rem;
+  cursor: pointer;
+  background: #3182ce;
+  color: white;
+  border-color: #3182ce;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  background: #fed7d7;
+  color: #742a2a;
+  word-break: break-word;
+}
+
+.success {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.5rem 1rem;
+  margin-top: 1.5rem;
+}
+
+dt {
+  font-weight: 600;
+  color: #4a5568;
+}
+
+dd {
+  margin: 0;
+  word-break: break-all;
+}
+
+code {
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  background: #edf2f7;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
