@@ -1,3 +1,5 @@
+import type { AxiosInstance } from "axios";
+
 export interface Organization {
   alias: string;
   title: string;
@@ -15,10 +17,12 @@ export interface FinishResult {
 
 export interface MyChartBaseProps {
   /**
-   * Base URL of the MyChart microservice. Defaults to the value baked into this
-   * module at build time (VITE_API_BASE_URL). The host normally does not set this.
+   * Authenticated HTTP client for the MyChart microservice, injected by the host.
+   * The host owns the base URL and auth (e.g. attaches the user's bearer token).
    */
-  apiBaseUrl?: string;
+  apiClient: AxiosInstance;
+  /** Optional path prefix in front of the microservice routes. Default: "". */
+  apiBasePath?: string;
   /** Extra class applied to the module's root container. */
   className?: string;
 }

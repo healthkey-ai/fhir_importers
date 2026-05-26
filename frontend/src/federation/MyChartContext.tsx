@@ -1,8 +1,10 @@
 import { createContext, useContext, useMemo } from "react";
+import type { AxiosInstance } from "axios";
 import { createMyChartClient, type MyChartClient } from "./client";
 
 interface MyChartContextValue {
-  apiBaseUrl: string;
+  apiClient: AxiosInstance;
+  apiBasePath: string;
 }
 
 const MyChartContext = createContext<MyChartContextValue | null>(null);
@@ -13,7 +15,10 @@ export function useMyChartClient(): MyChartClient {
   if (!ctx) {
     throw new Error("useMyChartClient must be used inside <MyChartProvider>");
   }
-  return useMemo(() => createMyChartClient(ctx.apiBaseUrl), [ctx.apiBaseUrl]);
+  return useMemo(
+    () => createMyChartClient(ctx.apiClient, ctx.apiBasePath),
+    [ctx.apiClient, ctx.apiBasePath],
+  );
 }
 
 export { MyChartContext };

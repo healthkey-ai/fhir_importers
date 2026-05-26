@@ -14,6 +14,7 @@
   "dependencies": {
     "@module-federation/runtime": "^2.4.0",
     "@module-federation/vite": "^1.15.5",
+    "axios": "^1.6.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

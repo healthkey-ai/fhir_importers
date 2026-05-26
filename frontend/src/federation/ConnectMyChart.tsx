@@ -68,9 +68,9 @@ function ConnectMyChartInner({ onError }: Pick<ConnectMyChartProps, "onError">) 
   );
 }
 
-export function ConnectMyChart({ apiBaseUrl, className, onError }: ConnectMyChartProps) {
+export function ConnectMyChart({ apiClient, apiBasePath, className, onError }: ConnectMyChartProps) {
   return (
-    <MyChartProvider apiBaseUrl={apiBaseUrl} className={className}>
+    <MyChartProvider apiClient={apiClient} apiBasePath={apiBasePath} className={className}>
       <ConnectMyChartInner onError={onError} />
     </MyChartProvider>
   );

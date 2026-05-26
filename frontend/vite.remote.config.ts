@@ -22,6 +22,7 @@ export default defineConfig({
         "react-dom": { singleton: true, strictVersion: false },
         "react/jsx-runtime": { singleton: true, strictVersion: false },
         "react/jsx-dev-runtime": { singleton: true, strictVersion: false },
+        axios: { singleton: true, strictVersion: false },
       },
       dts: false,
     }),
@@ -35,7 +36,7 @@ export default defineConfig({
     target: "esnext",
   },
   server: {
-    port: 5175,
+    port: 5178,
     strictPort: true,
   },
 });

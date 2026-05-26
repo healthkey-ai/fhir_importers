@@ -5,11 +5,6 @@ import type { FinishResult, MyChartCallbackProps } from "./types";
 
 type Status = "pending" | "ok" | "error";
 
-function maskToken(t: string): string {
-  if (t.length <= 16) return t;
-  return `${t.slice(0, 12)}…(+${t.length - 12})`;
-}
-
 function MyChartCallbackInner({
   code: codeProp,
   state: stateProp,
@@ -76,7 +71,9 @@ function MyChartCallbackInner({
 
       {status === "ok" && result && (
         <>
-          <div className="mychart-success">Authentication successful.</div>
+          <div className="mychart-success">MyChart connected successfully.</div>
+          {/* Tokens are intentionally not displayed; they are handed to the host
+              via onSuccess for secure persistence. Only non-sensitive context. */}
           <dl>
             <dt>Patient</dt>
             <dd>{result.patient ?? <em>not provided</em>}</dd>
@@ -84,20 +81,8 @@ function MyChartCallbackInner({
             <dd>
               <code>{result.scope ?? "(none)"}</code>
             </dd>
-            <dt>Expires in</dt>
+            <dt>Access expires in</dt>
             <dd>{result.expires_in}s</dd>
-            <dt>Access token</dt>
-            <dd>
-              <code>{maskToken(result.access_token)}</code>
-            </dd>
-            <dt>Refresh token</dt>
-            <dd>
-              <code>{result.refresh_token ? maskToken(result.refresh_token) : "(not issued)"}</code>
-            </dd>
-            <dt>ID token</dt>
-            <dd>
-              <code>{result.id_token ? maskToken(result.id_token) : "(not issued)"}</code>
-            </dd>
           </dl>
         </>
       )}
@@ -106,7 +91,8 @@ function MyChartCallbackInner({
 }
 
 export function MyChartCallback({
-  apiBaseUrl,
+  apiClient,
+  apiBasePath,
   className,
   code,
   state,
@@ -114,7 +100,7 @@ export function MyChartCallback({
   onError,
 }: MyChartCallbackProps) {
   return (
-    <MyChartProvider apiBaseUrl={apiBaseUrl} className={className}>
+    <MyChartProvider apiClient={apiClient} apiBasePath={apiBasePath} className={className}>
       <MyChartCallbackInner
         code={code}
         state={state}

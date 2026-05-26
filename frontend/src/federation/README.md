@@ -7,16 +7,13 @@ and renders the callback component on its own OAuth redirect route.
 ## Remote Entry
 
 - Build: `npm run build:remote` → `dist/remote/remoteEntry.js`
-- Dev: `npm run dev:remote` → serves the remote on `:5175`
+- Dev: `npm run dev:remote` → serves the remote on `:5178`
 - Standalone harness: `npm run dev` → `:5173` (mounts both components by path)
 
-The microservice URL is **owned by this module**, not the host. It is inlined
-from `VITE_API_BASE_URL` at remote-build time (`src/federation/config.ts`). Build
-the remote with the correct value per environment, e.g.:
-
-```bash
-VITE_API_BASE_URL=https://app.cancerbot.org:8030 npm run build:remote
-```
+The host injects an authenticated `apiClient` (axios). The host owns the
+microservice base URL and auth — it attaches the user's bearer token via an
+interceptor, exactly like ht-phr's `useLabsApi` / `usePhrApi`. This module never
+sees credentials or the URL directly.
 
 ## Host integration (ht-phr)
 
@@ -35,14 +32,19 @@ import { lazy, Suspense } from "react";
 const ConnectMyChart = lazy(() => import("mychart_remote/ConnectMyChart"));
 const MyChartCallback = lazy(() => import("mychart_remote/MyChartCallback"));
 
+// Build an authenticated client pointed at the MyChart microservice
+// (host-owned URL + token), e.g. a useMyChartApi() hook:
+const apiClient = useMyChartApi();
+
 // On the "connect your records" page:
 <Suspense fallback={<Spinner />}>
-  <ConnectMyChart onError={(e) => toast.error(e.message)} />
+  <ConnectMyChart apiClient={apiClient} onError={(e) => toast.error(e.message)} />
 </Suspense>
 
 // On the OAuth redirect route (see below):
 <Suspense fallback={<Spinner />}>
   <MyChartCallback
+    apiClient={apiClient}
     onSuccess={(tokens) => saveEpicTokens(tokens)}
     onError={(e) => toast.error(e.message)}
   />
@@ -68,7 +70,8 @@ default; pass `code`/`state` props if your router consumes them first.
 
 | Prop | Type | Description |
 |------|------|-------------|
-| `apiBaseUrl` | `string` | Optional override of the baked-in microservice URL |
+| `apiClient` | `AxiosInstance` | **Required.** Authenticated client for the microservice (host-owned URL + token) |
+| `apiBasePath` | `string` | Optional path prefix in front of `/epic/*`. Default `""` |
 | `className` | `string` | Extra class on the `.mychart-root` container |
 | `onError` | `(error: Error) => void` | Loading orgs / starting auth failed |
 
@@ -76,7 +79,8 @@ default; pass `code`/`state` props if your router consumes them first.
 
 | Prop | Type | Description |
 |------|------|-------------|
-| `apiBaseUrl` | `string` | Optional override of the baked-in microservice URL |
+| `apiClient` | `AxiosInstance` | **Required.** Authenticated client for the microservice |
+| `apiBasePath` | `string` | Optional path prefix. Default `""` |
 | `className` | `string` | Extra class on the `.mychart-root` container |
 | `code` | `string` | Optional; falls back to `?code=` in the URL |
 | `state` | `string` | Optional; falls back to `?state=` in the URL |
@@ -85,7 +89,7 @@ default; pass `code`/`state` props if your router consumes them first.
 
 ## Shared dependencies (singletons)
 
-`react`, `react-dom`, `react/jsx-runtime`, `react/jsx-dev-runtime`. The host must
-provide React 18/19; `strictVersion` is off so minor drift is tolerated. This
-module brings its own fetch client and styles (scoped under `.mychart-root`,
-injected once) — no axios/react-query/CSS framework required from the host.
+`react`, `react-dom`, `react/jsx-runtime`, `react/jsx-dev-runtime`, `axios`. The
+host must provide React 18/19 and an axios instance; `strictVersion` is off so
+minor drift is tolerated. Styles are scoped under `.mychart-root` and injected
+once — no react-query/CSS framework required from the host.
