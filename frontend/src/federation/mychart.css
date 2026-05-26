@@ -1,48 +1,31 @@
-:root {
+.mychart-root {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   line-height: 1.5;
   color: #1a202c;
-  background: #f7fafc;
 }
 
-* {
+.mychart-root * {
   box-sizing: border-box;
 }
 
-body {
-  margin: 0;
-}
-
-a {
-  color: #3182ce;
-}
-
-.container {
-  max-width: 640px;
-  margin: 4rem auto;
-  padding: 2rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-}
-
-h1 {
+.mychart-root h1,
+.mychart-root h2 {
   margin-top: 0;
 }
 
-.muted {
+.mychart-root .mychart-muted {
   color: #4a5568;
 }
 
-label {
+.mychart-root label {
   display: block;
   margin-top: 1rem;
   font-weight: 600;
 }
 
-select,
-button,
-.combobox-input {
+.mychart-root select,
+.mychart-root button,
+.mychart-root .combobox-input {
   font: inherit;
   display: block;
   margin-top: 0.5rem;
@@ -53,23 +36,36 @@ button,
   min-width: 240px;
 }
 
-.combobox {
+.mychart-root button {
+  margin-top: 1.5rem;
+  cursor: pointer;
+  background: #3182ce;
+  color: white;
+  border-color: #3182ce;
+}
+
+.mychart-root button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mychart-root .combobox {
   position: relative;
   width: 100%;
   max-width: 420px;
 }
 
-.combobox-input {
+.mychart-root .combobox-input {
   width: 100%;
   outline: none;
 }
 
-.combobox-input:focus {
+.mychart-root .combobox-input:focus {
   border-color: #3182ce;
   box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.18);
 }
 
-.combobox-list {
+.mychart-root .combobox-list {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
@@ -86,27 +82,27 @@ button,
   overflow-y: auto;
 }
 
-.combobox-option {
+.mychart-root .combobox-option {
   padding: 0.5rem 0.75rem;
   cursor: pointer;
 }
 
-.combobox-option.highlighted,
-.combobox-option:hover {
+.mychart-root .combobox-option.highlighted,
+.mychart-root .combobox-option:hover {
   background: #ebf4ff;
 }
 
-.combobox-option-title {
+.mychart-root .combobox-option-title {
   font-weight: 500;
 }
 
-.combobox-option-alias {
+.mychart-root .combobox-option-alias {
   font-size: 0.8em;
   color: #718096;
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
 }
 
-.combobox-empty {
+.mychart-root .combobox-empty {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
@@ -120,20 +116,7 @@ button,
   z-index: 10;
 }
 
-button {
-  margin-top: 1.5rem;
-  cursor: pointer;
-  background: #3182ce;
-  color: white;
-  border-color: #3182ce;
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.error {
+.mychart-root .mychart-error {
   margin-top: 1rem;
   padding: 0.75rem 1rem;
   border-radius: 6px;
@@ -142,7 +125,7 @@ button:disabled {
   word-break: break-word;
 }
 
-.success {
+.mychart-root .mychart-success {
   margin-top: 1rem;
   padding: 0.75rem 1rem;
   border-radius: 6px;
@@ -150,24 +133,24 @@ button:disabled {
   color: #22543d;
 }
 
-dl {
+.mychart-root dl {
   display: grid;
   grid-template-columns: max-content 1fr;
   gap: 0.5rem 1rem;
   margin-top: 1.5rem;
 }
 
-dt {
+.mychart-root dt {
   font-weight: 600;
   color: #4a5568;
 }
 
-dd {
+.mychart-root dd {
   margin: 0;
   word-break: break-all;
 }
 
-code {
+.mychart-root code {
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
   background: #edf2f7;
   padding: 0.1rem 0.3rem;

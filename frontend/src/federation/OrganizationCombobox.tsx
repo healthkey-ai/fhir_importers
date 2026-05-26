@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Organization } from "../api";
+import type { Organization } from "./types";
 
 interface Props {
   organizations: Organization[];
@@ -21,12 +21,10 @@ export function OrganizationCombobox({
   const [highlight, setHighlight] = useState<number>(0);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  // Reflect external value changes back into the input
   useEffect(() => {
     setQuery(value?.title ?? "");
   }, [value]);
 
-  // Close on outside click
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
@@ -46,7 +44,6 @@ export function OrganizationCombobox({
     );
   }, [organizations, query]);
 
-  // Clamp highlight when the filtered list shrinks
   useEffect(() => {
     if (highlight >= filtered.length) setHighlight(Math.max(0, filtered.length - 1));
   }, [filtered.length, highlight]);
@@ -85,7 +82,6 @@ export function OrganizationCombobox({
           setQuery(e.target.value);
           setOpen(true);
           setHighlight(0);
-          // Typing invalidates a previous concrete selection
           if (value && e.target.value !== value.title) onChange(null);
         }}
         onFocus={() => setOpen(true)}
@@ -94,13 +90,13 @@ export function OrganizationCombobox({
         placeholder={placeholder}
         role="combobox"
         aria-expanded={open}
-        aria-controls="combobox-list"
+        aria-controls="mychart-combobox-list"
         aria-autocomplete="list"
         autoComplete="off"
         spellCheck={false}
       />
       {open && filtered.length > 0 && (
-        <ul id="combobox-list" role="listbox" className="combobox-list">
+        <ul id="mychart-combobox-list" role="listbox" className="combobox-list">
           {filtered.map((o, i) => (
             <li
               key={o.alias}
@@ -108,7 +104,6 @@ export function OrganizationCombobox({
               aria-selected={highlight === i}
               className={`combobox-option${highlight === i ? " highlighted" : ""}`}
               onMouseDown={(e) => {
-                // Prevent input blur before click handler fires
                 e.preventDefault();
                 select(o);
               }}
