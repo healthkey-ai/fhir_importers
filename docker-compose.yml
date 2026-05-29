@@ -1,0 +1,61 @@
+services:
+  app:
+    build: .
+    image: fhir-importers-app
+    ports:
+      - "${HOST_PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql+asyncpg://fhir:fhir_dev_only@postgres:5432/fhir_importers
+      STAGING_PRIVATE_KEY_PATH: /run/secrets/epic_staging.key
+      PROD_PRIVATE_KEY_PATH: /run/secrets/epic_prod.key
+      ORGANIZATIONS_FILE: /app/organizations.json
+      # Validate Firebase tokens against the host's Auth emulator (verify is local;
+      # host-gateway lets the container reach it if needed).
+      FIREBASE_AUTH_EMULATOR_HOST: host.docker.internal:9099
+      FIREBASE_PROJECT_ID: demo-ht-phr
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # STAGING/PROD_PRIVATE_KEY_PATH from .env are HOST paths; the container sees
+      # them at the /run/secrets paths set above. Locally both may point at the
+      # same key — the prod key is only read when a real org is used.
+      - ${STAGING_PRIVATE_KEY_PATH}:/run/secrets/epic_staging.key:ro
+      - ${PROD_PRIVATE_KEY_PATH}:/run/secrets/epic_prod.key:ro
+      - ./organizations.json:/app/organizations.json:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: fhir_importers
+      POSTGRES_USER: fhir
+      POSTGRES_PASSWORD: fhir_dev_only
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fhir -d fhir_importers"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

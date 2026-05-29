@@ -1,0 +1,2384 @@
+{
+  "organizations": [
+    {
+      "alias": "my_chart_central",
+      "title": "MyChart Central",
+      "endpoint_url": "https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4"
+    },
+    {
+      "alias": "aaci",
+      "title": "AACI",
+      "endpoint_url": "https://webprd.ochin.org/prd-fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "access-community-health-centers",
+      "title": "Access Community Health Centers",
+      "endpoint_url": "https://epicproxy.hosp.wisc.edu/FhirProxy/UWHealth/api/FHIR/R4"
+    },
+    {
+      "alias": "access-community-health-network",
+      "title": "Access Community Health Network",
+      "endpoint_url": "https://eprescribing.accesscommunityhealth.net/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "acumen-physician-solutions",
+      "title": "Acumen Physician Solutions",
+      "endpoint_url": "https://epicproxy.et1041.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "adams-memorial-hospital",
+      "title": "Adams Memorial Hospital",
+      "endpoint_url": "https://epicprod-mobile.parkview.com/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "adena-health-system",
+      "title": "Adena Health System",
+      "endpoint_url": "https://ihismufhir.osumc.edu/fhir-prd/api/FHIR/R4"
+    },
+    {
+      "alias": "advanced-radiology",
+      "title": "Advanced Radiology",
+      "endpoint_url": "https://EpicProxy.hhchealth.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "advanced-vascular-surgery",
+      "title": "Advanced Vascular Surgery",
+      "endpoint_url": "https://hygieia.bronsonhg.org/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "advantagecare-physicians",
+      "title": "AdvantageCare Physicians",
+      "endpoint_url": "https://epwebapps.acpny.com/FHIRproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "adventhealth",
+      "title": "AdventHealth",
+      "endpoint_url": "https://mobile.adventhealth.com/oauth2-PRD/SHEPHERDSHOPE/api/FHIR/R4"
+    },
+    {
+      "alias": "adventist-health-columbia-gorge",
+      "title": "Adventist Health Columbia Gorge",
+      "endpoint_url": "https://epicmobile.ohsu.edu/FHIRPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "advocate-aurora-health",
+      "title": "Advocate Aurora Health",
+      "endpoint_url": "https://EpicFhir.aurora.org/FhirProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "akron-children-s",
+      "title": "Akron Children's",
+      "endpoint_url": "https://haiku-canto-prod.chmca.org/ARR-FHIR-PRD/ACH/api/FHIR/R4"
+    },
+    {
+      "alias": "alameda-health-system",
+      "title": "Alameda Health System",
+      "endpoint_url": "https://epicproxy.et1075.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "alaska-neurology-center",
+      "title": "Alaska Neurology Center",
+      "endpoint_url": "https://haikuak.providence.org/fhirproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "alaska-regional-hospital",
+      "title": "Alaska Regional Hospital",
+      "endpoint_url": "https://mountainstarhealthfhirprd.app.medcity.net/fhir-proxy/api/FHIR/R4"
+    },
+    {
+      "alias": "albany-med-health-system",
+      "title": "Albany Med Health System",
+      "endpoint_url": "https://epicproxy.et1299.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "aligned-geriatrics",
+      "title": "Aligned Geriatrics",
+      "endpoint_url": "https://epicproxy.et0502.epichosted.com/FhirProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "alignment-corporation",
+      "title": "Alignment Corporation",
+      "endpoint_url": "https://epicfe.unch.unc.edu/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "alleghany-health",
+      "title": "Alleghany Health",
+      "endpoint_url": "https://epicproxy.et0905.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "allegheny-health-network",
+      "title": "Allegheny Health Network",
+      "endpoint_url": "https://epicprisfd.ahn.org/PRD-FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "allina",
+      "title": "Allina",
+      "endpoint_url": "https://webproxy.allina.com/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "altais-health-solutions",
+      "title": "Altais Health Solutions",
+      "endpoint_url": "https://epicproxy.et1138.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "altamed",
+      "title": "AltaMed",
+      "endpoint_url": "https://epicproxy.et1123.epichosted.com/APIProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "altru",
+      "title": "Altru",
+      "endpoint_url": "https://epicsoap.altru.org/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "anmed-health",
+      "title": "AnMed Health",
+      "endpoint_url": "https://epicproxy.et0971.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "ann-robert-h-lurie-children-s-hospital-of-chicago",
+      "title": "Ann & Robert H. Lurie Children's Hospital of Chicago",
+      "endpoint_url": "https://epicmobile.luriechildrens.org/Interconnect-FHIRPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "appleton-health",
+      "title": "Appleton Health",
+      "endpoint_url": "https://epicmobile.centracare.com/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "arizona-community-physicians",
+      "title": "Arizona Community Physicians",
+      "endpoint_url": "https://interconnect.azacp.com/interconnect-oauth2-prd/api/FHIR/R4"
+    },
+    {
+      "alias": "arizona-community-specialists",
+      "title": "Arizona Community Specialists",
+      "endpoint_url": "https://fhir.tmcaz.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "arkansas-children-s",
+      "title": "Arkansas Children's",
+      "endpoint_url": "https://fhir.archildrens.org/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "arrowhead-regional-medical-center",
+      "title": "Arrowhead Regional Medical Center",
+      "endpoint_url": "https://epicproxy.et1152.epichosted.com/fhirproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "asante-health-system",
+      "title": "Asante Health System",
+      "endpoint_url": "https://epicmobile.asante.org/FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "ascension-providence-healthcare-network",
+      "title": "Ascension - Providence HealthCare Network",
+      "endpoint_url": "https://stofo.providence-waco.org/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "ascension-illinois",
+      "title": "Ascension Illinois",
+      "endpoint_url": "https://epicmobile.presencehealth.org/fhirPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "ascension-wisconsin",
+      "title": "Ascension Wisconsin",
+      "endpoint_url": "https://eprescribe.wfhc.org/FHIRproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "ashland-medical-center",
+      "title": "Ashland Medical Center",
+      "endpoint_url": "https://m.essentiahealth.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "aspen-valley-hospital",
+      "title": "Aspen Valley Hospital",
+      "endpoint_url": "https://epicproxy.et1254.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "aspire",
+      "title": "Aspire",
+      "endpoint_url": "https://epichaiku.chs-mi.com/FHIRPROXY/api/FHIR/R4"
+    },
+    {
+      "alias": "aspirus",
+      "title": "Aspirus",
+      "endpoint_url": "https://erx.aspirus.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "atlantic-health-system",
+      "title": "Atlantic Health System",
+      "endpoint_url": "https://soapproxy.atlantichealth.org/FHIRPrd/api/FHIR/R4"
+    },
+    {
+      "alias": "atrius-health",
+      "title": "Atrius Health",
+      "endpoint_url": "https://iatrius.atriushealth.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "audubon-county-memorial-hospital-clinics",
+      "title": "Audubon County Memorial Hospital & Clinics",
+      "endpoint_url": "https://myepicapps.uihealthcare.org/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "austin-regional-clinic",
+      "title": "Austin Regional Clinic",
+      "endpoint_url": "https://mobileprod.arcmd.com/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "bailey-medical-center",
+      "title": "Bailey Medical Center",
+      "endpoint_url": "https://epicproxy.ardenthealth.com/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "ballad-health",
+      "title": "Ballad Health",
+      "endpoint_url": "https://soap.wellmont.org/FHIRPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "baptist-health",
+      "title": "Baptist Health",
+      "endpoint_url": "https://api.baptist-health.org/Interconnect-FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "baptist-health-northeast-florida",
+      "title": "Baptist Health - Northeast Florida",
+      "endpoint_url": "https://epicproxy.et1206.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "baptist-healthcare",
+      "title": "Baptist Healthcare",
+      "endpoint_url": "https://epicproxy.bhsi.com/PRD-FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "baptist-memorial-health-care",
+      "title": "Baptist Memorial Health Care",
+      "endpoint_url": "https://rxedi.bmhcc.org/prd-fhir/api/FHIR/R4/"
+    },
+    {
+      "alias": "barrett-hospital-and-healthcare",
+      "title": "Barrett Hospital and Healthcare",
+      "endpoint_url": "https://haikuwa.providence.org/fhirproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "barton-health",
+      "title": "Barton Health",
+      "endpoint_url": "https://fhir.renown.org/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "bassett-healthcare",
+      "title": "Bassett Healthcare",
+      "endpoint_url": "https://soap.bassett.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "baton-rouge-general",
+      "title": "Baton Rouge General",
+      "endpoint_url": "https://interconnect.brgeneral.org/oauth/api/FHIR/R4"
+    },
+    {
+      "alias": "bay-area-hospital",
+      "title": "Bay Area Hospital",
+      "endpoint_url": "https://epicproxy.et1030.epichosted.com/FHIRProxy/Santiam/api/FHIR/R4"
+    },
+    {
+      "alias": "bayfront-health",
+      "title": "Bayfront Health",
+      "endpoint_url": "https://epicproxy.et1131.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "bayhealth-medical-center",
+      "title": "Bayhealth Medical Center",
+      "endpoint_url": "https://epproxy.bayhealth.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "baylor",
+      "title": "Baylor",
+      "endpoint_url": "https://fhir.clinical.bcm.edu/Stage1Fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "baylor-scott-white-health",
+      "title": "Baylor Scott & White Health",
+      "endpoint_url": "https://epicproxy.bswhealth.org/FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "beaver-medical-group",
+      "title": "Beaver Medical Group",
+      "endpoint_url": "https://epicproxy.et1038.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "bellaire-allergy-asthma",
+      "title": "Bellaire Allergy & Asthma",
+      "endpoint_url": "https://epicproxy.et1326.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "bellin",
+      "title": "Bellin",
+      "endpoint_url": "https://arr.thedacare.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "benefis-health-system",
+      "title": "Benefis Health System",
+      "endpoint_url": "https://epicproxy.et1334.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "beth-israel-lahey-health",
+      "title": "Beth Israel Lahey Health",
+      "endpoint_url": "https://fhir.laheyhealth.org/proxy-prd-fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "bethlehem-health-bureau",
+      "title": "Bethlehem Health Bureau",
+      "endpoint_url": "https://proxy.lvh.com/FHIR/MYBHB/api/FHIR/R4"
+    },
+    {
+      "alias": "biospine-institute",
+      "title": "BioSpine Institute",
+      "endpoint_url": "https://epicproxy.et1233.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "bjc-healthcare-washington-university",
+      "title": "BJC Healthcare & Washington University",
+      "endpoint_url": "https://epicproxy.et0965.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "boston-children-s-hospital",
+      "title": "Boston Children's Hospital",
+      "endpoint_url": "https://epicproxy.et1351.epichosted.com/APIProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "boston-medical-center",
+      "title": "Boston Medical Center",
+      "endpoint_url": "https://emerge-soap1.bmc.org/FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "boulder-community-health",
+      "title": "Boulder Community Health",
+      "endpoint_url": "https://prevprox.bch.org/FHIRproxyPRD/CCTPC/api/FHIR/R4"
+    },
+    {
+      "alias": "boys-town",
+      "title": "Boys Town",
+      "endpoint_url": "https://epic-fhir.mercy.net/prdfhirstl/api/FHIR/R4/"
+    },
+    {
+      "alias": "bozeman-health",
+      "title": "Bozeman Health",
+      "endpoint_url": "https://revproxy.bh.bozemanhealth.org/Interconnect-OAuth2-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "broadway",
+      "title": "Broadway",
+      "endpoint_url": "https://minerva.northmemorial.com/fhir/UMPBROADWAY/api/FHIR/R4"
+    },
+    {
+      "alias": "brockton-neighborhood-health-center",
+      "title": "Brockton Neighborhood Health Center",
+      "endpoint_url": "https://epicproxy.et1290.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "brooklyn-health",
+      "title": "Brooklyn Health",
+      "endpoint_url": "https://epicproxy.et1043.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "brookwood-baptist-health",
+      "title": "Brookwood Baptist Health",
+      "endpoint_url": "https://epicproxy.bhsala.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "broward-community-and-family-health-centers",
+      "title": "Broward Community and Family Health Centers",
+      "endpoint_url": "https://epicproxy.et1256.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "broward-health",
+      "title": "Broward Health",
+      "endpoint_url": "https://epicproxy.et1369.epichosted.com/APIProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "bruce-w-moskowitz",
+      "title": "Bruce W Moskowitz",
+      "endpoint_url": "https://epicproxy.et4001.epichosted.com/APIProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "bryan-health",
+      "title": "Bryan Health",
+      "endpoint_url": "https://epicproxy.et1031.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "buffalo-medical-group",
+      "title": "Buffalo Medical Group",
+      "endpoint_url": "https://fhir.buffalomedicalgroup.com/fhir-arr/api/FHIR/R4"
+    },
+    {
+      "alias": "cambridge-health-alliance",
+      "title": "Cambridge Health Alliance",
+      "endpoint_url": "https://epicmobile.challiance.org/Interconnect-OAuth2/api/FHIR/R4"
+    },
+    {
+      "alias": "cancercare-specialists",
+      "title": "CancerCare Specialists",
+      "endpoint_url": "https://ssproxy.osfhealthcare.org/fhir-proxy/HOSTED/api/FHIR/R4"
+    },
+    {
+      "alias": "cape-cod-healthcare",
+      "title": "Cape Cod Healthcare",
+      "endpoint_url": "https://epicproxy.et1149.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "cape-fear-valley",
+      "title": "Cape Fear Valley",
+      "endpoint_url": "https://epicproxy.et1094.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "care-new-england",
+      "title": "Care New England",
+      "endpoint_url": "https://cnesp001.carene.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "carelon",
+      "title": "Carelon",
+      "endpoint_url": "https://interconnect.carelonhealth.com/Interconnect-PRD-OAuth2/api/FHIR/R4/"
+    },
+    {
+      "alias": "carilion",
+      "title": "Carilion",
+      "endpoint_url": "https://fhir.carilionclinic.org/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "carle",
+      "title": "Carle",
+      "endpoint_url": "https://epicproxy.et0316.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "carol-milgard-breast-center",
+      "title": "Carol Milgard Breast Center",
+      "endpoint_url": "https://soapprod.multicare.org/FHIRProxy/CMBC/api/FHIR/R4"
+    },
+    {
+      "alias": "carolinaeast-health-system",
+      "title": "CarolinaEast Health System",
+      "endpoint_url": "https://epicproxy.et1385.epichosted.com/FHIRProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "caromont-health",
+      "title": "CaroMont Health",
+      "endpoint_url": "https://spp.caromonthealth.org/FhirProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "carson-tahoe",
+      "title": "Carson Tahoe",
+      "endpoint_url": "https://webproxyprd.med.utah.edu/FHIRMyChart/api/FHIR/R4"
+    },
+    {
+      "alias": "catholic-health",
+      "title": "Catholic Health",
+      "endpoint_url": "https://epicproxy.et1144.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "catholic-health-services-of-long-island",
+      "title": "Catholic Health Services of Long Island",
+      "endpoint_url": "https://epx1.chsli.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "cedars-sinai",
+      "title": "Cedars-Sinai",
+      "endpoint_url": "https://cslinkmobile.csmc.edu/fhirproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "ceenta",
+      "title": "CEENTA",
+      "endpoint_url": "https://epicproxy.et1001.epichosted.com/FHIRProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "central-ohio-primary-care-physicians",
+      "title": "Central Ohio Primary Care Physicians",
+      "endpoint_url": "https://rp-prd.copcp.com/fhirProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "central-surgical-associates",
+      "title": "Central Surgical Associates",
+      "endpoint_url": "https://rxedi.bmhcc.org/prd-fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "cherry-hill-free-clinic",
+      "title": "Cherry Hill Free Clinic",
+      "endpoint_url": "https://epicproxy.et1017.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "cheyenne-regional-medical-center",
+      "title": "Cheyenne Regional Medical Center",
+      "endpoint_url": "https://soap.crmcwy.org/fhirproxy/HOME/api/FHIR/R4"
+    },
+    {
+      "alias": "chi-franciscan-health",
+      "title": "CHI Franciscan Health",
+      "endpoint_url": "https://rp.catholichealth.net/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "chi-health",
+      "title": "CHI Health",
+      "endpoint_url": "https://rp.chihealth.com/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "chi-memorial",
+      "title": "CHI Memorial",
+      "endpoint_url": "https://rpsouth.catholichealth.net/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "chi-st-vincent",
+      "title": "CHI St. Vincent",
+      "endpoint_url": "https://epic-fhir.mercy.net/PRDFHIRSGF/CHI/api/FHIR/R4/"
+    },
+    {
+      "alias": "child-guidance-and-family-solutions",
+      "title": "Child Guidance and Family Solutions",
+      "endpoint_url": "https://haiku-canto-prod.chmca.org/ARR-FHIR-PRD/CGFS/api/FHIR/R4"
+    },
+    {
+      "alias": "children-s-health",
+      "title": "Children's Health",
+      "endpoint_url": "https://fhir.childrens.com/prd/api/FHIR/R4"
+    },
+    {
+      "alias": "children-s-healthcare-of-atlanta",
+      "title": "Children's Healthcare of Atlanta",
+      "endpoint_url": "https://wpprod.choa.org/FHIR_PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "children-s-heart-clinic-of-la",
+      "title": "Children's Heart Clinic of LA",
+      "endpoint_url": "https://interconnect.lcmchealth.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "children-s-hospital-colorado",
+      "title": "Children's Hospital Colorado",
+      "endpoint_url": "https://fhir.childrenscolorado.org/fhirprd/api/FHIR/R4"
+    },
+    {
+      "alias": "children-s-nebraska",
+      "title": "Children's Nebraska",
+      "endpoint_url": "https://EPROXY1.chsomaha.org/OAUTH2PROXY/api/FHIR/R4"
+    },
+    {
+      "alias": "children-s-of-alabama",
+      "title": "Children's of Alabama",
+      "endpoint_url": "https://epicproxy.et1246.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "children-s-wisconsin",
+      "title": "Children's Wisconsin",
+      "endpoint_url": "https://epicproxy.et0815.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "chop",
+      "title": "CHOP",
+      "endpoint_url": "https://epicnsproxy.chop.edu/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "christus-health",
+      "title": "Christus Health",
+      "endpoint_url": "https://proxy.christushealth.org/FHIRPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "cincinnati-children-s",
+      "title": "Cincinnati Children's",
+      "endpoint_url": "https://boomer.cchmc.org/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "city-of-allentown-pennsylvania",
+      "title": "City of Allentown Pennsylvania",
+      "endpoint_url": "https://proxy.lvh.com/FHIR/MYAHB/api/FHIR/R4"
+    },
+    {
+      "alias": "city-of-hope",
+      "title": "City of Hope",
+      "endpoint_url": "https://epic-rproxyprod.coh.org/Interconnect-FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "cleveland-clinic",
+      "title": "Cleveland Clinic",
+      "endpoint_url": "https://api.ccf.org/mu/api/FHIR/R4"
+    },
+    {
+      "alias": "cody-regional-health",
+      "title": "Cody Regional Health",
+      "endpoint_url": "https://epicproxy.et0645.epichosted.com/FHIRProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "columbia-gorge-family-medicine",
+      "title": "Columbia Gorge Family Medicine",
+      "endpoint_url": "https://haikuor.providence.org/fhirproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "columbia-university-irving-medical-center",
+      "title": "Columbia University Irving Medical Center",
+      "endpoint_url": "https://epicproxy-pub.et1089.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "columbus-regional-health",
+      "title": "Columbus Regional Health",
+      "endpoint_url": "https://epicprdproxy.crh.org/FHIRPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "commonspirit-mountain-region",
+      "title": "CommonSpirit Mountain Region",
+      "endpoint_url": "https://epic-p-foreground.centura.org/prd-fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "community-health-network",
+      "title": "Community Health Network",
+      "endpoint_url": "https://esp.ecommunity.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "community-medical-centers",
+      "title": "Community Medical Centers",
+      "endpoint_url": "https://epicsoapprd.communitymedical.org/arr_fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "community-memorial-hospital",
+      "title": "Community Memorial Hospital",
+      "endpoint_url": "https://eprescribe.sanfordhealth.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "communitycare",
+      "title": "CommunityCare",
+      "endpoint_url": "https://geisapi.geisinger.edu/FHIR_PROD/api/FHIR/R4"
+    },
+    {
+      "alias": "communitycare-2",
+      "title": "CommUnityCare",
+      "endpoint_url": "https://epicproxy.et1164.epichosted.com/fhirproxy/CUC/api/FHIR/R4"
+    },
+    {
+      "alias": "communitycare-plan",
+      "title": "Communitycare PLAN",
+      "endpoint_url": "https://mhssp.mhs.net/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "complete-cardiovascular-care",
+      "title": "Complete Cardiovascular Care",
+      "endpoint_url": "https://epicproxy.et0830.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "concentra",
+      "title": "Concentra",
+      "endpoint_url": "https://epicproxy.et0948.epichosted.com/FhirProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "cone-health",
+      "title": "Cone Health",
+      "endpoint_url": "https://epsoap.conehealth.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "conemaugh-health-system",
+      "title": "Conemaugh Health System",
+      "endpoint_url": "https://fhir.conemaugh.org/arr-fhir-prd/api/FHIR/R4"
+    },
+    {
+      "alias": "confluence-health",
+      "title": "Confluence Health",
+      "endpoint_url": "https://epicproxy.et0764.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "connecticut-children-s-medical-center",
+      "title": "Connecticut Children's Medical Center",
+      "endpoint_url": "https://epicproxy.connecticutchildrens.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "contra-costa-health-services",
+      "title": "Contra Costa Health Services",
+      "endpoint_url": "https://icproxy.mycclink.org/proxy-FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "cook-children-s",
+      "title": "Cook Children's",
+      "endpoint_url": "https://cookicfg.cookchildrens.org/CookFHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "cooper",
+      "title": "Cooper",
+      "endpoint_url": "https://epicproxy.et0578.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "corewell-health-west",
+      "title": "Corewell Health West",
+      "endpoint_url": "https://epicarr02.spectrumhealth.org/EpicFHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "cottage-health-system",
+      "title": "Cottage Health System",
+      "endpoint_url": "https://eparp.sbch.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "county-of-san-mateo",
+      "title": "County of San Mateo",
+      "endpoint_url": "https://epicproxy.et1356.epichosted.com/FHIRProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "crossing-rivers-health-november-1-2022-and-after",
+      "title": "Crossing Rivers Health (November 1, 2022 and after)",
+      "endpoint_url": "https://scproxy.gundersenhealth.org/FHIRARR/api/FHIR/R4"
+    },
+    {
+      "alias": "dartmouth",
+      "title": "Dartmouth",
+      "endpoint_url": "https://edhwebportal.hitchcock.org/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "davita-physician-solutions",
+      "title": "DaVita Physician Solutions",
+      "endpoint_url": "https://epicproxy.et1087.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "dayton-children-s-hospital",
+      "title": "Dayton Children's Hospital",
+      "endpoint_url": "https://appprd.childrensdayton.org/interconnect-prd-fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "deaconess",
+      "title": "Deaconess",
+      "endpoint_url": "https://eprp.deaconess.com/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "denver-health",
+      "title": "Denver Health",
+      "endpoint_url": "https://webservices.dhha.org/PRD-FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "doctors-on-duty",
+      "title": "Doctors on Duty",
+      "endpoint_url": "https://epicproxy.et1146.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "driscoll-children-s-hospital",
+      "title": "Driscoll Children's Hospital",
+      "endpoint_url": "https://fhir.dchstx.org/FHIR-External/api/FHIR/R4"
+    },
+    {
+      "alias": "duke-university-health-system",
+      "title": "Duke University Health System",
+      "endpoint_url": "https://health-apis.duke.edu/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "duly-health-and-care",
+      "title": "Duly Health and Care",
+      "endpoint_url": "https://epicproxy.et1296.epichosted.com/APIProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "dupage-medical-group",
+      "title": "DuPage Medical Group",
+      "endpoint_url": "https://fhirprd.edward.org/fhirprd/api/FHIR/R4"
+    },
+    {
+      "alias": "east-adams-rural-hospital",
+      "title": "East Adams Rural Hospital",
+      "endpoint_url": "https://soapprod.multicare.org/FHIRProxy/EARH/api/FHIR/R4"
+    },
+    {
+      "alias": "ecu-health",
+      "title": "ECU Health",
+      "endpoint_url": "https://prd-proxy.vidanthealth.com/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "eisenhower-medical-center",
+      "title": "Eisenhower Medical Center",
+      "endpoint_url": "https://epicarr.emc.org/EMC_FHIR_PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "el-camino",
+      "title": "El Camino",
+      "endpoint_url": "https://rwebproxy.elcaminohospital.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "el-rio-health",
+      "title": "El Rio Health",
+      "endpoint_url": "https://epicproxy.et1240.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "emory-healthcare",
+      "title": "Emory Healthcare",
+      "endpoint_url": "https://epicrp-prd.eushc.org/OAUTH2-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "endeavor-health",
+      "title": "Endeavor Health",
+      "endpoint_url": "https://epicprdproxy.nch.org/prd-fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "endeavor-health-2",
+      "title": "Endeavor Health",
+      "endpoint_url": "https://haiku.northshore.org/Interconnect-FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "englewood",
+      "title": "Englewood",
+      "endpoint_url": "https://epicproxy.et1073.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "enloe-medical-center",
+      "title": "Enloe Medical Center",
+      "endpoint_url": "https://epicproxy.et1034.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "erlanger-health-system",
+      "title": "Erlanger Health System",
+      "endpoint_url": "https://epicproxy.et0967.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "eskenazi",
+      "title": "Eskenazi",
+      "endpoint_url": "https://proxy.eskenazihealth.edu/FHIR-Proxy/api/FHIR/R4"
+    },
+    {
+      "alias": "evergreenhealth",
+      "title": "EvergreenHealth",
+      "endpoint_url": "https://epicproxy.et1270.epichosted.com/apiproxyprd/api/FHIR/R4"
+    },
+    {
+      "alias": "evernorth-care-group",
+      "title": "Evernorth Care Group",
+      "endpoint_url": "https://epicarr.healthcare.cigna.com/FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "exact-sciences",
+      "title": "Exact Sciences",
+      "endpoint_url": "https://epicproxy.et1126.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "family-and-aging-center",
+      "title": "Family and Aging Center",
+      "endpoint_url": "https://epicproxy.et1326.epichosted.com/FHIRProxy/api/FHIR/R4/"
+    },
+    {
+      "alias": "family-care-network",
+      "title": "Family Care Network",
+      "endpoint_url": "https://epicproxy.fcn.net/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "fastmed",
+      "title": "FastMed",
+      "endpoint_url": "https://external.fastmed.com/FHIRproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "firsthealth-of-the-carolinas",
+      "title": "FirstHealth of the Carolinas",
+      "endpoint_url": "https://epicrp.firsthealth.org/FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "florida-health-care-plans",
+      "title": "Florida Health Care Plans",
+      "endpoint_url": "https://epicproxy.et1359.epichosted.com/FHIRProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "franciscan-alliance",
+      "title": "Franciscan Alliance",
+      "endpoint_url": "https://ema.franciscanalliance.org/FHIR_PROXY/SPI/api/FHIR/R4"
+    },
+    {
+      "alias": "froedtert",
+      "title": "Froedtert",
+      "endpoint_url": "https://epicservicegw.froedtert.com/FHIRproxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "garnet-health",
+      "title": "Garnet Health",
+      "endpoint_url": "https://epic.garnethealth.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "genesis",
+      "title": "Genesis",
+      "endpoint_url": "https://fhir.genesishcs.org/api/FHIR/R4"
+    },
+    {
+      "alias": "ghc",
+      "title": "GHC",
+      "endpoint_url": "https://linkpoint.ghcscw.com/Interconnect-PRD-FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "go-east-medical-services",
+      "title": "Go East Medical Services",
+      "endpoint_url": "https://epicproxy.et1332.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "golden-valley-health-centers",
+      "title": "Golden Valley Health Centers",
+      "endpoint_url": "https://ep-rps.gvhc.org/FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "grady-health-system",
+      "title": "Grady Health System",
+      "endpoint_url": "https://surescripts.gmh.edu/OAuth2PRD/GHSMYC/api/FHIR/R4"
+    },
+    {
+      "alias": "greater-baltimore-medical-center",
+      "title": "Greater Baltimore Medical Center",
+      "endpoint_url": "https://eportal.gbmc.org/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "guthrie",
+      "title": "Guthrie",
+      "endpoint_url": "https://fhir.guthrie.org/FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "gw-university-medical-faculty-associates",
+      "title": "GW University Medical Faculty Associates",
+      "endpoint_url": "https://epicproxy.et1222.epichosted.com/FHIRPROXY/api/FHIR/R4"
+    },
+    {
+      "alias": "hackensack-umc",
+      "title": "Hackensack UMC",
+      "endpoint_url": "https://mepic.hmhn.org/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "hamilton-health-care-system",
+      "title": "Hamilton Health Care System",
+      "endpoint_url": "https://epicproxy.et1336.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "harney-district-hospital",
+      "title": "Harney District Hospital",
+      "endpoint_url": "https://epicproxy.et1030.epichosted.com/FHIRProxy/BC/api/FHIR/R4"
+    },
+    {
+      "alias": "harris-county-public-health",
+      "title": "Harris County Public Health",
+      "endpoint_url": "https://fhir.harrishealth.org/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "hattiesburg",
+      "title": "Hattiesburg",
+      "endpoint_url": "https://soapprod.hattiesburgclinic.com/OAuth2/api/FHIR/R4"
+    },
+    {
+      "alias": "hawaii-pacific-health",
+      "title": "Hawaii Pacific Health",
+      "endpoint_url": "https://webservices.hawaiipacifichealth.org/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "health-center-powered-by-mount-sinai",
+      "title": "Health Center, powered by Mount Sinai",
+      "endpoint_url": "https://epicsoapproxyprd.mountsinai.org/FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "health-ventures",
+      "title": "Health Ventures",
+      "endpoint_url": "https://emrproxy.mcfarlandclinic.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "healthpartners",
+      "title": "HealthPartners",
+      "endpoint_url": "https://proxy.healthpartners.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "healthpoint",
+      "title": "HealthPoint",
+      "endpoint_url": "https://epicproxy.et1395.epichosted.com/APIProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "heart-of-texas",
+      "title": "Heart of Texas",
+      "endpoint_url": "https://epicrpx.shannonhealth.org/FHIR_ARR/api/FHIR/R4"
+    },
+    {
+      "alias": "heartland-health-services",
+      "title": "Heartland Health Services",
+      "endpoint_url": "https://ssproxy.osfhealthcare.org/fhir-proxy/HHSIL/api/FHIR/R4"
+    },
+    {
+      "alias": "helen-newberry-joy",
+      "title": "Helen Newberry Joy",
+      "endpoint_url": "https://arrprod.midmichigan.net/ProdFHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "hemophilia-outreach-center",
+      "title": "Hemophilia Outreach Center",
+      "endpoint_url": "https://scripts.prevea.com/FHIR-ARR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "hendricks-regional-health",
+      "title": "Hendricks Regional Health",
+      "endpoint_url": "https://sehproxy.stelizabeth.com/arr-fhir/HRH/api/FHIR/R4"
+    },
+    {
+      "alias": "hennepin",
+      "title": "Hennepin",
+      "endpoint_url": "https://hie.hcmed.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "henry-ford-health",
+      "title": "Henry Ford Health",
+      "endpoint_url": "https://fhir.hfhs.org/fhirproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "highland-district-hospital",
+      "title": "Highland District Hospital",
+      "endpoint_url": "https://epicscripts.trihealth.com/fhirproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "hill-physicians-medical-group",
+      "title": "Hill Physicians Medical Group",
+      "endpoint_url": "https://epicproxy.et1013.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "hoag-memorial-hospital-presbyterian",
+      "title": "Hoag Memorial Hospital Presbyterian",
+      "endpoint_url": "https://epicproxy.et1197.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "honor-health",
+      "title": "Honor Health",
+      "endpoint_url": "https://interconnect.honorhealth.com/Interconnect-FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "hospital-for-special-surgery",
+      "title": "Hospital for Special Surgery",
+      "endpoint_url": "https://epicproxy.et0927.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "houston-methodist",
+      "title": "Houston Methodist",
+      "endpoint_url": "https://epicproxy.et0922.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "hpi",
+      "title": "HPI",
+      "endpoint_url": "https://FHIR.Integrisok.com/Interconnect-FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "hurley-medical-center",
+      "title": "Hurley Medical Center",
+      "endpoint_url": "https://fhir.hurleymc.com/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "igo-medical-group",
+      "title": "IGO Medical Group",
+      "endpoint_url": "https://epicproxy.et0502.epichosted.com/FHIRProxy/api/FHIR/R4/"
+    },
+    {
+      "alias": "illinois-bone-joint-institute",
+      "title": "Illinois Bone & Joint Institute",
+      "endpoint_url": "https://epicproxy.et1195.epichosted.com/fhirproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "infirmary",
+      "title": "Infirmary",
+      "endpoint_url": "https://ssproxyprod.infirmaryhealth.org/epicFHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "innovage",
+      "title": "InnovAge",
+      "endpoint_url": "https://rp.innovage.com/OAUTH2-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "inova-health-system",
+      "title": "Inova Health System",
+      "endpoint_url": "https://epicrpprd.inova.org/fhirrp/api/FHIR/R4"
+    },
+    {
+      "alias": "john-muir-health",
+      "title": "John Muir Health",
+      "endpoint_url": "https://fhir.johnmuirhealth.com/fhir-prd/api/FHIR/R4"
+    },
+    {
+      "alias": "johns-hopkins-medicine",
+      "title": "Johns Hopkins Medicine",
+      "endpoint_url": "https://epicproxy.et0842.epichosted.com/FHIRProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "jps-health-network",
+      "title": "JPS Health Network",
+      "endpoint_url": "https://oauth2.revprxprd.jpshealth.org/epoauth2/api/FHIR/R4"
+    },
+    {
+      "alias": "jupiter-medical-center",
+      "title": "Jupiter Medical Center",
+      "endpoint_url": "https://epicrp.jupitermed.com/oauth2-prd/api/FHIR/R4"
+    },
+    {
+      "alias": "kaiser-permanente-colorado",
+      "title": "Kaiser Permanente - Colorado",
+      "endpoint_url": "https://fhir.kp.org/service/ptnt_care/EpicEdiFhirRoutingSvc/v2014/esb-envlbl/140/api/FHIR/R4/"
+    },
+    {
+      "alias": "kaiser-permanente-georgia",
+      "title": "Kaiser Permanente - Georgia",
+      "endpoint_url": "https://fhir.kp.org/service/ptnt_care/EpicEdiFhirRoutingSvc/v2014/esb-envlbl/200/api/FHIR/R4/"
+    },
+    {
+      "alias": "kaiser-permanente-hawaii",
+      "title": "Kaiser Permanente - Hawaii",
+      "endpoint_url": "https://fhir.kp.org/service/ptnt_care/EpicEdiFhirRoutingSvc/v2014/esb-envlbl/130/api/FHIR/R4/"
+    },
+    {
+      "alias": "kaiser-permanente-mid-atlantic",
+      "title": "Kaiser Permanente - Mid-Atlantic",
+      "endpoint_url": "https://FHIR.KP.ORG/service/ptnt_care/EpicEdiFhirRoutingSvc/v2014/esb-envlbl/170/api/FHIR/R4"
+    },
+    {
+      "alias": "kaiser-permanente-northern-california",
+      "title": "Kaiser Permanente - Northern California",
+      "endpoint_url": "https://FHIR.KP.ORG/service/ptnt_care/EpicEdiFhirRoutingSvc/v2014/esb-envlbl/312/api/FHIR/R4/"
+    },
+    {
+      "alias": "kaiser-permanente-northwest",
+      "title": "Kaiser Permanente - Northwest",
+      "endpoint_url": "https://FHIR.KP.ORG/service/ptnt_care/EpicEdiFhirRoutingSvc/v2014/esb-envlbl/190/api/FHIR/R4/"
+    },
+    {
+      "alias": "kaiser-permanente-southern-california",
+      "title": "Kaiser Permanente - Southern California",
+      "endpoint_url": "https://fhir.kp.org/service/ptnt_care/EpicEdiFhirRoutingSvc/v2014/esb-envlbl/212/api/FHIR/R4/"
+    },
+    {
+      "alias": "kaiser-permanente-washington",
+      "title": "Kaiser Permanente - Washington",
+      "endpoint_url": "https://fhir.kp.org/Interconnect-FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "kelseycare-advantage",
+      "title": "KelseyCare Advantage",
+      "endpoint_url": "https://ssrx.ksnet.com/FHIRproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "kennedy-krieger-institute",
+      "title": "Kennedy Krieger Institute",
+      "endpoint_url": "https://epicproxy.et1095.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "kettering",
+      "title": "Kettering",
+      "endpoint_url": "https://KHNARR.KETTHEALTH.COM/FHIR-PROD/api/FHIR/R4"
+    },
+    {
+      "alias": "keycare",
+      "title": "KeyCare",
+      "endpoint_url": "https://epicproxy.et1284.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "keystone-health",
+      "title": "Keystone Health",
+      "endpoint_url": "https://interconnect.wellspan.org/interconnect-prd-oauth2/api/FHIR/R4"
+    },
+    {
+      "alias": "kootenai-health",
+      "title": "Kootenai Health",
+      "endpoint_url": "https://soapprod.multicare.org/FHIRProxy/KH/api/FHIR/R4"
+    },
+    {
+      "alias": "lakeland-regional-health",
+      "title": "Lakeland Regional Health",
+      "endpoint_url": "https://epicapp.mylrh.org/OAuth2/api/FHIR/R4"
+    },
+    {
+      "alias": "lancaster",
+      "title": "Lancaster",
+      "endpoint_url": "https://epicproxy.lghealth.org/fhirproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "lee-memorial-health-system",
+      "title": "Lee Memorial Health System",
+      "endpoint_url": "https://epicedi.leememorial.org/FHIR-prd/api/FHIR/R4"
+    },
+    {
+      "alias": "legacy-health-system",
+      "title": "Legacy Health System",
+      "endpoint_url": "https://LHSPDXFHIRPRD.LHS.ORG/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "lehigh-valley-health-network",
+      "title": "Lehigh Valley Health Network",
+      "endpoint_url": "https://proxy.lvh.com/FHIR/MYLVHN/api/FHIR/R4"
+    },
+    {
+      "alias": "leon-medical-centers",
+      "title": "Leon Medical Centers",
+      "endpoint_url": "https://prodinterconnect.leonmedicalcenters.com/FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "lexington-county-health-services",
+      "title": "Lexington County Health Services",
+      "endpoint_url": "https://lmcrcs.lexmed.com/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "licking-memorial-health-system",
+      "title": "Licking Memorial Health System",
+      "endpoint_url": "https://epicproxy.et1168.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "lifespan",
+      "title": "Lifespan",
+      "endpoint_url": "https://lsepprdsoap.lifespan.org/fhirproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "lindner-center-of-hope",
+      "title": "Lindner Center of Hope",
+      "endpoint_url": "https://epic-soap.uchealth.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "loma-linda",
+      "title": "Loma Linda",
+      "endpoint_url": "https://prd.lluh.org/fhir"
+    },
+    {
+      "alias": "longstreet-clinic",
+      "title": "Longstreet Clinic",
+      "endpoint_url": "https://wpprod.nghs.com/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "loyola-medicine",
+      "title": "Loyola Medicine",
+      "endpoint_url": "https://rxhub.luhs.org/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "lumina",
+      "title": "Lumina",
+      "endpoint_url": "https://fhir.metrohealth.org/fhir_prd/api/FHIR/R4"
+    },
+    {
+      "alias": "luminis-health",
+      "title": "Luminis Health",
+      "endpoint_url": "https://epicarr.aahs.org/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "main-line-health",
+      "title": "Main Line Health",
+      "endpoint_url": "https://epicproxy.et1007.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "mainehealth",
+      "title": "MaineHealth",
+      "endpoint_url": "https://fhir.mainehealth.org/FHIRPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "marshall-medical-center",
+      "title": "Marshall Medical Center",
+      "endpoint_url": "https://emrrp.ucdmc.ucdavis.edu/FHIR/MMC/api/FHIR/R4"
+    },
+    {
+      "alias": "mary-washington",
+      "title": "Mary Washington",
+      "endpoint_url": "https://epicproxy.et1055.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "maryland-primary-care-physicians",
+      "title": "Maryland Primary Care Physicians",
+      "endpoint_url": "https://FHIR.umm.edu/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "mass-general-brigham",
+      "title": "Mass General Brigham",
+      "endpoint_url": "https://ws-interconnect-fhir.partners.org/Interconnect-FHIR-MU-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "mayo-clinic",
+      "title": "Mayo Clinic",
+      "endpoint_url": "https://mcc.api.mayo.edu/epic-fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "mcleod-health",
+      "title": "McLeod Health",
+      "endpoint_url": "https://epicproxy.et1267.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "medisys-health-network",
+      "title": "MediSys Health Network",
+      "endpoint_url": "https://eprescribe-p.medisys.org/fhir-prd/api/FHIR/R4"
+    },
+    {
+      "alias": "memorial-health",
+      "title": "Memorial Health",
+      "endpoint_url": "https://memorialhealthfhirprd.app.medcity.net/fhir-proxy/api/FHIR/R4"
+    },
+    {
+      "alias": "memorial-hospital-and-healthcare-center",
+      "title": "Memorial Hospital and Healthcare Center",
+      "endpoint_url": "https://arrprd.mhhcc.org/OAuth2/api/FHIR/R4"
+    },
+    {
+      "alias": "memorialcare",
+      "title": "MemorialCare",
+      "endpoint_url": "https://fhir.memorialcare.org/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "mercy-health-services",
+      "title": "Mercy Health Services",
+      "endpoint_url": "https://interconnect.mdmercy.com/fhir-prd/api/FHIR/R4"
+    },
+    {
+      "alias": "mercy-medical-center",
+      "title": "Mercy Medical Center",
+      "endpoint_url": "https://eproxy.mercycare.org/oauth2/api/FHIR/R4"
+    },
+    {
+      "alias": "mercyone",
+      "title": "MercyOne",
+      "endpoint_url": "https://epicprdext.stfranciscare.org/FhirProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "meritus",
+      "title": "Meritus",
+      "endpoint_url": "https://epicproxy.et1062.epichosted.com/FHIRProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "methodist-health-system",
+      "title": "Methodist Health System",
+      "endpoint_url": "https://epcapp.mhd.com/arr-prd-fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "methodist-hospitals",
+      "title": "Methodist Hospitals",
+      "endpoint_url": "https://mychart.methodisthospitals.org/FHIR-ARR/api/FHIR/R4"
+    },
+    {
+      "alias": "methodist-le-bonheur-healthcare",
+      "title": "Methodist Le Bonheur Healthcare",
+      "endpoint_url": "https://epicproxy.et1342.epichosted.com/APIProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "mhealth-fairview",
+      "title": "MHealth Fairview",
+      "endpoint_url": "https://sfd.fairview.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "mhs",
+      "title": "MHS",
+      "endpoint_url": "https://epicproxy.mhsjvl.org/FHIRproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "middlesex-health",
+      "title": "Middlesex Health",
+      "endpoint_url": "https://epicproxy.et1124.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "midwestern-university-clinics",
+      "title": "Midwestern University Clinics",
+      "endpoint_url": "https://epicproxy.et1329.epichosted.com/APIProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "minneapolis-clinic-of-neurology-mychart",
+      "title": "Minneapolis Clinic of Neurology MyChart",
+      "endpoint_url": "https://minerva.northmemorial.com/fhir/MPLSCLINICNEURO/api/FHIR/R4"
+    },
+    {
+      "alias": "minute-clinic",
+      "title": "Minute Clinic",
+      "endpoint_url": "https://retailepicfhir.cvshealth.com/FhirProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "mississippi-state-department-of-health",
+      "title": "Mississippi State Department of Health",
+      "endpoint_url": "https://soapproxy.umc.edu/FHIRProxy/MSDH/api/FHIR/R4"
+    },
+    {
+      "alias": "mohawk-valley-health-system",
+      "title": "Mohawk Valley Health System",
+      "endpoint_url": "https://fhir.mvhealthsystem.org/FHIRproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "molina-healthcare",
+      "title": "Molina Healthcare",
+      "endpoint_url": "https://epicproxy.et1057.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "montage-health",
+      "title": "Montage Health",
+      "endpoint_url": "https://epicproxy.et1058.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "montefiore-health-system-inc",
+      "title": "Montefiore Health System, Inc.",
+      "endpoint_url": "https://soapepic.montefiore.org/FhirProxyPrd/api/FHIR/R4"
+    },
+    {
+      "alias": "monument-health",
+      "title": "Monument Health",
+      "endpoint_url": "https://ehrmobile.monument.health/interconnect-prd-fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "mosaic-life-care",
+      "title": "Mosaic Life Care",
+      "endpoint_url": "https://epicproxy.et1274.epichosted.com/FHIRproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "mount-auburn",
+      "title": "Mount Auburn",
+      "endpoint_url": "https://fhir.mah.org/prd-fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "mount-sinai-florida",
+      "title": "Mount Sinai Florida",
+      "endpoint_url": "https://epicfhir.msmc.com/proxysite-prd/api/FHIR/R4"
+    },
+    {
+      "alias": "mountain-west-surgical-specialists",
+      "title": "Mountain West Surgical Specialists",
+      "endpoint_url": "https://soap.crmcwy.org/fhirproxy/MountainWest/api/FHIR/R4"
+    },
+    {
+      "alias": "mtosc",
+      "title": "MTOSC",
+      "endpoint_url": "https://epicproxy.et1015.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "multicare",
+      "title": "MultiCare",
+      "endpoint_url": "https://soapprod.multicare.org/FHIRProxy/MHS/api/FHIR/R4"
+    },
+    {
+      "alias": "musc-health",
+      "title": "MUSC Health",
+      "endpoint_url": "https://fhirprod.musc.edu/fhirprod/api/FHIR/R4"
+    },
+    {
+      "alias": "muscogee-creek-nation",
+      "title": "Muscogee Creek Nation",
+      "endpoint_url": "https://epicproxy.et1221.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "myconnect-health-portal",
+      "title": "MyConnect Health Portal",
+      "endpoint_url": "https://proxy.lvh.com/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "nationwide-children-s-hospital",
+      "title": "Nationwide Children's Hospital",
+      "endpoint_url": "https://hkc.nationwidechildrens.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "neighborhealth",
+      "title": "NeighborHealth",
+      "endpoint_url": "https://host8.ebnhc.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "nemours",
+      "title": "Nemours",
+      "endpoint_url": "https://iconnect.nemours.org/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "new-hanover-regional-medical-center",
+      "title": "New Hanover Regional Medical Center",
+      "endpoint_url": "https://epicmobile.nhrmc.org/OAuth2-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "noms",
+      "title": "NOMS",
+      "endpoint_url": "https://prdproxy.nomshealthcare.com/PRD-OAuth2/api/FHIR/R4"
+    },
+    {
+      "alias": "north-memorial",
+      "title": "North Memorial",
+      "endpoint_url": "https://minerva.northmemorial.com/fhir/NORTHMEMORIAL/api/FHIR/R4"
+    },
+    {
+      "alias": "north-mississippi-health-services",
+      "title": "North Mississippi Health Services",
+      "endpoint_url": "https://eiclbext.nmhs.net/interconnect-generaloauth2services-prd/api/FHIR/R4"
+    },
+    {
+      "alias": "north-oaks-health-system",
+      "title": "North Oaks Health System",
+      "endpoint_url": "https://soapproxyprd.northoaks.org/NOHSFHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "northwestern-medicine",
+      "title": "Northwestern Medicine",
+      "endpoint_url": "https://nmepicproxy.nm.org/FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "norton-healthcare",
+      "title": "Norton Healthcare",
+      "endpoint_url": "https://epicproxy.et0819.epichosted.com/APIPROXYPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "novant",
+      "title": "Novant",
+      "endpoint_url": "https://epicproxy.et0798.epichosted.com/APIProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "nyc-health-and-hospitals",
+      "title": "NYC Health and Hospitals",
+      "endpoint_url": "https://epicproxypda.nychhc.org/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "nyu-langone",
+      "title": "NYU Langone",
+      "endpoint_url": "https://epicfhir.nyumc.org/FHIRPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "ochsner-health-system",
+      "title": "Ochsner Health System",
+      "endpoint_url": "https://myc.ochsner.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "ohio-department-of-mental-health-and-addiction-services",
+      "title": "Ohio Department of Mental Health and Addiction Services",
+      "endpoint_url": "https://epicproxy.et1316.epichosted.com/APIPROXYPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "ohiohealth",
+      "title": "OhioHealth",
+      "endpoint_url": "https://ccpintconfg.ohiohealth.com/Interconnect-PRD-OAUTH2/api/FHIR/R4"
+    },
+    {
+      "alias": "oklahoma-heart-hospital",
+      "title": "Oklahoma Heart Hospital",
+      "endpoint_url": "https://epicrp.okheart.com/Oauth2Proxy/api/FHIR/R4"
+    },
+    {
+      "alias": "oklahoma-state-university",
+      "title": "Oklahoma State University",
+      "endpoint_url": "https://eprdsoap000.saintfrancis.Com/FHIRProxy/OSU/api/FHIR/R4"
+    },
+    {
+      "alias": "olmsted-medical-center",
+      "title": "Olmsted Medical Center",
+      "endpoint_url": "https://epicproxy.et1077.epichosted.com/APIPROXYPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "one-brooklyn-health-system",
+      "title": "One Brooklyn Health System",
+      "endpoint_url": "https://epicproxy.et0883.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "onechart",
+      "title": "OneChart",
+      "endpoint_url": "https://ocsoapprd.nebraskamed.com/FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "optum-formerly-riverside",
+      "title": "Optum (formerly Riverside)",
+      "endpoint_url": "https://epicarr.optum.com/FHIR/api/FHIR/R4/"
+    },
+    {
+      "alias": "optum-care-washington",
+      "title": "Optum Care Washington",
+      "endpoint_url": "https://fhir.myeverettclinic.com/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "oregon-medical-group",
+      "title": "Oregon Medical Group",
+      "endpoint_url": "https://epicpnwarr.optum.com/FHIR/api/FHIR/R4/"
+    },
+    {
+      "alias": "orthocarolina",
+      "title": "OrthoCarolina",
+      "endpoint_url": "https://epwebapps.orthocarolina.com/fhir-prd/api/FHIR/R4"
+    },
+    {
+      "alias": "osceola-medical-center",
+      "title": "Osceola Medical Center",
+      "endpoint_url": "https://webprd.ochin.org/prd-fhir/mychartnch/api/FHIR/R4"
+    },
+    {
+      "alias": "osf-healthcare",
+      "title": "OSF HealthCare",
+      "endpoint_url": "https://ssproxy.osfhealthcare.org/fhir-proxy/OSF/api/FHIR/R4"
+    },
+    {
+      "alias": "ou-health",
+      "title": "OU Health",
+      "endpoint_url": "https://epicproxy.et1181.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "overlake",
+      "title": "Overlake",
+      "endpoint_url": "https://sfd.overlakehospital.org/FHIRproxy/POSM/api/FHIR/R4"
+    },
+    {
+      "alias": "owensboro",
+      "title": "Owensboro",
+      "endpoint_url": "https://fhir.omhs.org/rp-prd-fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "packard-health",
+      "title": "Packard Health",
+      "endpoint_url": "https://arrprd.metrohealth.net/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "parkland",
+      "title": "Parkland",
+      "endpoint_url": "https://pmh-vmhaiku-01.pmh.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "peacehealth",
+      "title": "PeaceHealth",
+      "endpoint_url": "https://soapproxy.peacehealth.org/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "peak-health",
+      "title": "Peak Health",
+      "endpoint_url": "https://apps.mywvuchart.com/FHIRproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "pediatric-physicians-organization-at-children-s",
+      "title": "Pediatric Physicians' Organization at Children's",
+      "endpoint_url": "https://fhir.chppoc.org/Fhir-External/api/FHIR/R4"
+    },
+    {
+      "alias": "penn-medicine",
+      "title": "Penn Medicine",
+      "endpoint_url": "https://ssproxy.pennhealth.com/PRD-FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "phelps-health",
+      "title": "Phelps Health",
+      "endpoint_url": "https://epicproxy.et1134.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "piedmont-healthcare",
+      "title": "Piedmont Healthcare",
+      "endpoint_url": "https://webproxy.piedmont.org/ARR-FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "pikeville-medical-center",
+      "title": "Pikeville Medical Center",
+      "endpoint_url": "https://epicproxy.et1225.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "pine-rest",
+      "title": "Pine Rest",
+      "endpoint_url": "https://wecare.pinerest.org/fhirproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "planned-parenthood",
+      "title": "Planned Parenthood",
+      "endpoint_url": "https://epicproxy.et1154.epichosted.com/APIProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "pocano-ambulatory-surgery-center",
+      "title": "Pocano Ambulatory Surgery Center",
+      "endpoint_url": "https://proxy.lvh.com/FHIR/MYPASC/api/FHIR/R4"
+    },
+    {
+      "alias": "powers-health",
+      "title": "Powers Health",
+      "endpoint_url": "https://webproxy.comhs.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "premier-health",
+      "title": "Premier Health",
+      "endpoint_url": "https://rx.premierhealthpartners.org/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "premise-health",
+      "title": "Premise Health",
+      "endpoint_url": "https://epicproxy.et1052.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "presbyterian-healthcare-services",
+      "title": "Presbyterian Healthcare Services",
+      "endpoint_url": "https://epicfhir.phs.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "prime-healthcare",
+      "title": "Prime Healthcare",
+      "endpoint_url": "https://phsfhir.primehealthcare.com/PHS-PRD-FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "prisma-health",
+      "title": "Prisma Health",
+      "endpoint_url": "https://epicproxy.et0915.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "prohealth-care",
+      "title": "ProHealth Care",
+      "endpoint_url": "https://soap.phci.org/Interconnect-FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "prohealth-physicians",
+      "title": "ProHealth Physicians",
+      "endpoint_url": "https://fhirprd.reliantmedicalgroup.org/FHIRPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "promedica",
+      "title": "ProMedica",
+      "endpoint_url": "https://fhir.promedica.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "quadmed",
+      "title": "Quadmed",
+      "endpoint_url": "https://epicicfore.quadmedical.com/FHIRPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "queen-s-connect",
+      "title": "Queen's Connect",
+      "endpoint_url": "https://mobileapps.queens.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "rady-children-s",
+      "title": "Rady Children's",
+      "endpoint_url": "https://epcppxl1.rchsd.org/fhirprd/api/FHIR/R4"
+    },
+    {
+      "alias": "reid-health",
+      "title": "Reid Health",
+      "endpoint_url": "https://epicproxy.et1220.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "riverside-health-system",
+      "title": "Riverside Health System",
+      "endpoint_url": "https://ep-rpfg.rivhs.com/Interconnect-FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "riverside-medical-center",
+      "title": "Riverside Medical Center",
+      "endpoint_url": "https://RPPROD.riversidehealthcare.net/FHIRPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "riverside-medical-clinic",
+      "title": "Riverside Medical Clinic",
+      "endpoint_url": "https://SF1.rmcps.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "riverview-health",
+      "title": "RiverView Health",
+      "endpoint_url": "https://epic-fhir.mercy.net/PRDFHIRSTL/RVH/api/FHIR/R4/"
+    },
+    {
+      "alias": "rochelle-community-hospital",
+      "title": "Rochelle Community Hospital",
+      "endpoint_url": "https://ssproxy.osfhealthcare.org/fhir-proxy/Rochelle/api/FHIR/R4"
+    },
+    {
+      "alias": "rochester-general",
+      "title": "Rochester General",
+      "endpoint_url": "https://epicarr.rochesterregional.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "rush-university-medical-center",
+      "title": "Rush University Medical Center",
+      "endpoint_url": "https://epicproxy.rush.edu/fhir-prd/api/FHIR/R4"
+    },
+    {
+      "alias": "rwjbarnabas-health",
+      "title": "RWJBarnabas Health",
+      "endpoint_url": "https://epicproxy.et1157.epichosted.com/FHIRProxy/HOME/api/FHIR/R4"
+    },
+    {
+      "alias": "saint-francis-health-system",
+      "title": "Saint Francis Health System",
+      "endpoint_url": "https://eprdsoap000.saintfrancis.Com/FHIRProxy/SFHS/api/FHIR/R4"
+    },
+    {
+      "alias": "saint-francis-healthcare-system",
+      "title": "Saint Francis Healthcare System",
+      "endpoint_url": "https://reverseproxy.sfmc.net/fhirproxyprd/api/FHIR/R4"
+    },
+    {
+      "alias": "saint-luke-s-health-system",
+      "title": "Saint Luke's Health System",
+      "endpoint_url": "https://epicmobile.corp.saint-lukes.org/FHIRPROXY/api/FHIR/R4"
+    },
+    {
+      "alias": "salem",
+      "title": "Salem",
+      "endpoint_url": "https://prd.salemhealth.org/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "salem-township-hospital",
+      "title": "Salem Township Hospital",
+      "endpoint_url": "https://ssproxy.osfhealthcare.org/fhir-proxy/Salem/api/FHIR/R4"
+    },
+    {
+      "alias": "samaritan-health-services",
+      "title": "Samaritan Health Services",
+      "endpoint_url": "https://fhir.samhealth.org/fhir-arr/api/FHIR/R4"
+    },
+    {
+      "alias": "san-francisco-dept-of-public-health",
+      "title": "San Francisco Dept of Public Health",
+      "endpoint_url": "https://epicproxy.et1082.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "san-ysidro-health",
+      "title": "San Ysidro Health",
+      "endpoint_url": "https://epicproxy.et1327.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "sansum",
+      "title": "Sansum",
+      "endpoint_url": "https://wavesurescripts.sansumclinic.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "santa-clara",
+      "title": "Santa Clara",
+      "endpoint_url": "https://scvhhsfhir.sccgov.org/interconnect-oauth2/api/FHIR/R4"
+    },
+    {
+      "alias": "scripps-health",
+      "title": "Scripps Health",
+      "endpoint_url": "https://haiku.scrippshealth.org/ARR-PRD-FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "sea-mar",
+      "title": "Sea Mar",
+      "endpoint_url": "https://soapprod.multicare.org/FHIRProxy/SMCHC/api/FHIR/R4"
+    },
+    {
+      "alias": "seattle-children-s-mychart",
+      "title": "Seattle Children's MyChart",
+      "endpoint_url": "https://fhir.seattlechildrens.org/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "self-regional",
+      "title": "Self Regional",
+      "endpoint_url": "https://epicproxy.et1235.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "sentara-health",
+      "title": "Sentara Health",
+      "endpoint_url": "https://epicfhir.sentara.com/ARR-FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "sgmc",
+      "title": "SGMC",
+      "endpoint_url": "https://epicproxy.et1024.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "shannon",
+      "title": "Shannon",
+      "endpoint_url": "https://epicrpx.shannonhealth.org/FHIR_ARR/api/FHIR/R4/"
+    },
+    {
+      "alias": "sharp-healthcare",
+      "title": "Sharp Healthcare",
+      "endpoint_url": "https://epicproxy.et1275.epichosted.com/fhirproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "shriner-s-childrens",
+      "title": "Shriner's Childrens",
+      "endpoint_url": "https://epicproxy.et1283.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "sinai-chicago",
+      "title": "Sinai Chicago",
+      "endpoint_url": "https://ssproxy.osfhealthcare.org/fhir-proxy/SinaiChicago/api/FHIR/R4"
+    },
+    {
+      "alias": "singing-river-health-system",
+      "title": "Singing River Health System",
+      "endpoint_url": "https://arr.mysrhs.com/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "skagit",
+      "title": "Skagit",
+      "endpoint_url": "https://epicproxy.et1005.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "smile-generation-mychart",
+      "title": "Smile Generation MyChart",
+      "endpoint_url": "https://epicproxy.et1079.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "snoqualmie-valley-health",
+      "title": "Snoqualmie Valley Health",
+      "endpoint_url": "https://sfd.overlakehospital.org/FHIRproxy/SVH/api/FHIR/R4"
+    },
+    {
+      "alias": "solutionhealth",
+      "title": "SolutionHealth",
+      "endpoint_url": "https://epicproxyprd.solutionhealth.org/FHIR_PROD/api/FHIR/R4"
+    },
+    {
+      "alias": "south-shore-health",
+      "title": "South Shore Health",
+      "endpoint_url": "https://sshic.southshorehealth.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "southcoast-health-system",
+      "title": "Southcoast Health System",
+      "endpoint_url": "https://epicpproxy.southcoast.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "southeast-health",
+      "title": "Southeast Health",
+      "endpoint_url": "https://arrprd.southeasthealth.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "southern-illinois-healthcare",
+      "title": "Southern Illinois Healthcare",
+      "endpoint_url": "https://epicproxy.et0986.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "spartanburg-regional-healthcare-system",
+      "title": "Spartanburg Regional Healthcare System",
+      "endpoint_url": "https://epicproxy.et0939.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "ssm-health",
+      "title": "SSM Health",
+      "endpoint_url": "https://fhir.ssmhc.com/Fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "st-luke-s-university-health-network",
+      "title": "St Luke's University Health Network",
+      "endpoint_url": "https://fhir.slhn.org/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "st-barnabas-health",
+      "title": "St. Barnabas Health",
+      "endpoint_url": "https://sbhepicrevprox.barnabas.network/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "st-david-s",
+      "title": "St. David's",
+      "endpoint_url": "https://stdavidsfhirprd.app.medcity.net/fhir-proxy/api/FHIR/R4"
+    },
+    {
+      "alias": "st-elizabeth-healthcare",
+      "title": "St. Elizabeth Healthcare",
+      "endpoint_url": "https://sehproxy.stelizabeth.com/arr-fhir/SEH/api/FHIR/R4"
+    },
+    {
+      "alias": "st-jude",
+      "title": "St. Jude",
+      "endpoint_url": "https://rp.stjude.org/oauth2-prd/api/FHIR/R4"
+    },
+    {
+      "alias": "st-luke-s",
+      "title": "St. Luke's",
+      "endpoint_url": "https://epincoming.slhs.org/Interconnect-FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "stanford",
+      "title": "Stanford",
+      "endpoint_url": "https://sfd.stanfordmed.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "stanford-children-s-health",
+      "title": "Stanford Children's Health",
+      "endpoint_url": "https://epicproxy.et0857.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "stellis-health",
+      "title": "Stellis Health",
+      "endpoint_url": "https://minerva.northmemorial.com/fhir/STELLISHEALTH/api/FHIR/R4"
+    },
+    {
+      "alias": "stormont-vail-health-care",
+      "title": "Stormont Vail Health Care",
+      "endpoint_url": "https://epicsoap.stormontvail.org/FHIRproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "summa-health",
+      "title": "Summa Health",
+      "endpoint_url": "https://epicproxy.et1289.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "summit-county-public-health",
+      "title": "Summit County Public Health",
+      "endpoint_url": "https://haiku-canto-prod.chmca.org/ARR-FHIR-PRD/SCPH/api/FHIR/R4"
+    },
+    {
+      "alias": "summit-health",
+      "title": "Summit Health",
+      "endpoint_url": "https://epicproxy.et1153.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "summit-health-oregon",
+      "title": "Summit Health - Oregon",
+      "endpoint_url": "https://epicsoap.bmctotalcare.com/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "suny",
+      "title": "SUNY",
+      "endpoint_url": "https://epicedge.upstate.edu/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "sutter-health",
+      "title": "Sutter Health",
+      "endpoint_url": "https://apiservices.sutterhealth.org/ifs/api/FHIR/R4"
+    },
+    {
+      "alias": "tahoe-forest-health-system",
+      "title": "Tahoe Forest Health System",
+      "endpoint_url": "https://epic-fhir.mercy.net/PRDFHIRAOK2/TAO/api/FHIR/R4/"
+    },
+    {
+      "alias": "tampa-general-hospital",
+      "title": "Tampa General Hospital",
+      "endpoint_url": "https://epicproxy.et0761.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "tanner-health-system",
+      "title": "Tanner Health System",
+      "endpoint_url": "https://epicproxy.et1098.epichosted.com/APIProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "templehealth",
+      "title": "TempleHealth",
+      "endpoint_url": "https://epicaccess.templehealth.org/FhirProxyPrd/api/FHIR/R4"
+    },
+    {
+      "alias": "texas-children-s",
+      "title": "Texas Children's",
+      "endpoint_url": "https://mobileapps.texaschildrens.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "texas-health-resources",
+      "title": "Texas Health Resources",
+      "endpoint_url": "https://epproxy.texashealth.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "texas-scottish-rite-hospital-for-children",
+      "title": "Texas Scottish Rite Hospital for Children",
+      "endpoint_url": "https://epicproxy.et0970.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "the-center",
+      "title": "The Center",
+      "endpoint_url": "https://epicproxy.et4006.epichosted.com/FHIRProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "the-christ-hospital",
+      "title": "The Christ Hospital",
+      "endpoint_url": "https://soapproxyprod.thechristhospital.com/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "the-institute-for-family-health",
+      "title": "The Institute for Family Health",
+      "endpoint_url": "https://epicproxy.institute.org/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "the-portland-clinic",
+      "title": "The Portland Clinic",
+      "endpoint_url": "https://tpc-shield.tpcllp.com/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "the-university-of-kansas-health-system",
+      "title": "The University of Kansas Health System",
+      "endpoint_url": "https://fhir.kansashealthsystem.com/interconnect-PRD_FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "thomas-jefferson-university-health-system",
+      "title": "Thomas Jefferson University Health System",
+      "endpoint_url": "https://fhir.jefferson.edu/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "thunder-basin",
+      "title": "Thunder Basin",
+      "endpoint_url": "https://soap.crmcwy.org/fhirproxy/ThunderBasin/api/FHIR/R4"
+    },
+    {
+      "alias": "tidalhealth",
+      "title": "TidalHealth",
+      "endpoint_url": "https://eweb.tidalhealth.org/Oauth2/api/FHIR/R4"
+    },
+    {
+      "alias": "tower-health",
+      "title": "Tower Health",
+      "endpoint_url": "https://epicsoap.readinghospital.org/FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "trinity-health",
+      "title": "Trinity Health",
+      "endpoint_url": "https://epic-ext.trinity-health.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "tufts-medicine",
+      "title": "Tufts Medicine",
+      "endpoint_url": "https://intconfg-p.well-net.org/PRD-OAUTH2/api/FHIR/R4"
+    },
+    {
+      "alias": "tulsa-bone-and-joint-associates",
+      "title": "Tulsa Bone and Joint Associates",
+      "endpoint_url": "https://eprdsoap000.saintfrancis.Com/FHIRProxy/CC/api/FHIR/R4"
+    },
+    {
+      "alias": "uc-davis",
+      "title": "UC Davis",
+      "endpoint_url": "https://emrrp.ucdmc.ucdavis.edu/FHIR/UCD/api/FHIR/R4"
+    },
+    {
+      "alias": "uchealth",
+      "title": "UCHealth",
+      "endpoint_url": "https://ss.uch.edu/FHIRProxy/MHC/api/FHIR/R4"
+    },
+    {
+      "alias": "ucla-medical-center",
+      "title": "UCLA Medical Center",
+      "endpoint_url": "https://arrprox.mednet.ucla.edu/FHIRPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "uconn-health",
+      "title": "UConn Health",
+      "endpoint_url": "https://epicproxy.et0996.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "ucsf",
+      "title": "UCSF",
+      "endpoint_url": "https://unified-api.ucsf.edu/clinical/apex/api/FHIR/R4"
+    },
+    {
+      "alias": "ui-health",
+      "title": "UI Health",
+      "endpoint_url": "https://epicproxy.et1085.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "uk-healthcare",
+      "title": "UK Healthcare",
+      "endpoint_url": "https://ukepicproxy.mc.uky.edu/Interconnect-PRD-OAuth2/api/FHIR/R4"
+    },
+    {
+      "alias": "uk-king-s-daughters",
+      "title": "UK King's Daughters",
+      "endpoint_url": "https://arrprd.kdmc.net/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "umass-memorial-health",
+      "title": "UMass Memorial Health",
+      "endpoint_url": "https://epicproxy.et0978.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "umc-southern-nevada",
+      "title": "UMC Southern Nevada",
+      "endpoint_url": "https://epicproxy.et1023.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "united-health-services",
+      "title": "United Health Services",
+      "endpoint_url": "https://epicproxy.et1127.epichosted.com/FHIRproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "united-regional",
+      "title": "United Regional",
+      "endpoint_url": "https://epicproxy.et1096.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "unitypoint-health",
+      "title": "UnityPoint Health",
+      "endpoint_url": "https://epicfhir.unitypoint.org/ProdFHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "university-health-system",
+      "title": "University Health System",
+      "endpoint_url": "https://epicproxy.et1130.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "university-hospital",
+      "title": "University Hospital",
+      "endpoint_url": "https://epicproxy.et0434.epichosted.com/APIProxyPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "university-hospitals-cleveland",
+      "title": "University Hospitals Cleveland",
+      "endpoint_url": "https://uhhsportal.uhhospitals.org/oauth2-prd/api/FHIR/R4"
+    },
+    {
+      "alias": "university-of-arkansas-for-medical-sciences",
+      "title": "University of Arkansas for Medical Sciences",
+      "endpoint_url": "https://ucsoap.uams.edu/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "university-of-chicago-hospitals",
+      "title": "University of Chicago Hospitals",
+      "endpoint_url": "https://interconapps.uchospitals.edu/PRD-FHIR-Proxy/api/FHIR/R4"
+    },
+    {
+      "alias": "university-of-florida",
+      "title": "University of Florida",
+      "endpoint_url": "https://epicsoap.shands.ufl.edu/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "university-of-louisville-physicians",
+      "title": "University of Louisville Physicians",
+      "endpoint_url": "https://epicproxy.et1193.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "university-of-miami",
+      "title": "University of Miami",
+      "endpoint_url": "https://uhealthsoap.med.miami.edu/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "university-of-michigan-health",
+      "title": "University of Michigan Health",
+      "endpoint_url": "https://mcproxyprd.med.umich.edu/FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "university-of-michigan-health-sparrow",
+      "title": "University of Michigan Health-Sparrow",
+      "endpoint_url": "https://haiku.sparrow.org/fhir-prd/api/FHIR/R4"
+    },
+    {
+      "alias": "university-of-mississippi-medical-center",
+      "title": "University of Mississippi Medical Center",
+      "endpoint_url": "https://soapproxy.umc.edu/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "university-of-rochester",
+      "title": "University of Rochester",
+      "endpoint_url": "https://ercd-sproxy.urmc.rochester.edu/mips/api/FHIR/R4"
+    },
+    {
+      "alias": "university-of-texas-md-anderson-cancer-center",
+      "title": "University of Texas MD Anderson Cancer Center",
+      "endpoint_url": "https://fhir.mdanderson.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "university-of-toledo",
+      "title": "University of Toledo",
+      "endpoint_url": "https://icon.utoledo.edu/ic-oa2-prd/api/FHIR/R4"
+    },
+    {
+      "alias": "university-of-vermont-health-network",
+      "title": "University of Vermont Health Network",
+      "endpoint_url": "https://epicproxy.uvmhealth.org/FHIR-ARR/api/FHIR/R4"
+    },
+    {
+      "alias": "university-of-virginia",
+      "title": "University of Virginia",
+      "endpoint_url": "https://hscsesoap.hscs.virginia.edu/oauth2/api/FHIR/R4"
+    },
+    {
+      "alias": "upmc",
+      "title": "UPMC",
+      "endpoint_url": "https://epic-fhir-prd.upmc.com/FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "upmc-in-central-pa",
+      "title": "UPMC in Central Pa.",
+      "endpoint_url": "https://Epic-Arr.pinnaclehealth.org/PRD-FHIR-ARR/api/FHIR/R4"
+    },
+    {
+      "alias": "ut-medicine-san-antonio",
+      "title": "UT Medicine San Antonio",
+      "endpoint_url": "https://epicproxy.et0582.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "uthealth-houston",
+      "title": "UTHealth Houston",
+      "endpoint_url": "https://epicproxy.et1178.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "utmb",
+      "title": "UTMB",
+      "endpoint_url": "https://epic-arr.utmb.edu/fhir-prd/api/FHIR/R4"
+    },
+    {
+      "alias": "utsw",
+      "title": "UTSW",
+      "endpoint_url": "https://EpicIntprxyPRD.swmed.edu/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "uw-medicine",
+      "title": "UW Medicine",
+      "endpoint_url": "https://fhir.epic.medical.washington.edu/FHIR-Proxy/api/FHIR/R4"
+    },
+    {
+      "alias": "valley-children-s-hospital",
+      "title": "Valley Children's Hospital",
+      "endpoint_url": "https://ic.valleychildrens.org/fhir/api/FHIR/R4"
+    },
+    {
+      "alias": "valley-health",
+      "title": "Valley Health",
+      "endpoint_url": "https://api.valleyhealth.org/fhirproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "valley-health-partners",
+      "title": "Valley Health Partners",
+      "endpoint_url": "https://proxy.lvh.com/FHIR/MYVHP/api/FHIR/R4"
+    },
+    {
+      "alias": "valley-health-system",
+      "title": "Valley Health System",
+      "endpoint_url": "https://epicproxy.et1320.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "valley-medical-center",
+      "title": "Valley Medical Center",
+      "endpoint_url": "https://FHIR.valleymed.org/FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "valleywise",
+      "title": "Valleywise",
+      "endpoint_url": "https://esoap.mihs.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "vancouver-clinic",
+      "title": "Vancouver Clinic",
+      "endpoint_url": "https://soapprod.tvc.org/ARR-FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "vanderbilt-university-medical-center",
+      "title": "Vanderbilt University Medical Center",
+      "endpoint_url": "https://arr01.service.vumc.org/FHIR-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "vcu-health",
+      "title": "VCU Health",
+      "endpoint_url": "https://epicproxy.et1200.epichosted.com/oauth2-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "vhc-health",
+      "title": "VHC Health",
+      "endpoint_url": "https://common.virginiahospitalcenter.com/FHIRPRD/api/FHIR/R4"
+    },
+    {
+      "alias": "volunteers-in-medicine-cascades",
+      "title": "Volunteers in Medicine Cascades",
+      "endpoint_url": "https://epicproxy.et1030.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "wabash-general-hospital",
+      "title": "Wabash General Hospital",
+      "endpoint_url": "https://ssproxy.osfhealthcare.org/fhir-proxy/Wabash/api/FHIR/R4"
+    },
+    {
+      "alias": "waco-family-medicine",
+      "title": "Waco Family Medicine",
+      "endpoint_url": "https://haiku.wacofhc.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "wakemed-health-and-hospitals",
+      "title": "WakeMed Health and Hospitals",
+      "endpoint_url": "https://epic-soap.wakemed.org/FHIR/api/FHIR/R4"
+    },
+    {
+      "alias": "washington-hospital-health-system",
+      "title": "Washington Hospital Health System",
+      "endpoint_url": "https://psacesoap.whhs.com/interconnect-fhir-prd/api/FHIR/R4"
+    },
+    {
+      "alias": "watson-clinic",
+      "title": "Watson Clinic",
+      "endpoint_url": "https://epic-arr.watsonclinicad.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "wellstar",
+      "title": "WellStar",
+      "endpoint_url": "https://epicsoap.wellstar.org/fhirproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "west-tennessee-healthcare",
+      "title": "West Tennessee Healthcare",
+      "endpoint_url": "https://epicproxy.et1243.epichosted.com/OAuth2-PRD/api/FHIR/R4"
+    },
+    {
+      "alias": "western-washington-medical-group",
+      "title": "Western Washington Medical Group",
+      "endpoint_url": "https://soapprod.multicare.org/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "woman-s",
+      "title": "Woman's",
+      "endpoint_url": "https://epicproxy.et1339.epichosted.com/FHIRproxy/api/FHIR/R4"
+    },
+    {
+      "alias": "yakima-valley-farm-workers-clinic",
+      "title": "Yakima Valley Farm Workers Clinic",
+      "endpoint_url": "https://epicproxy.et0943.epichosted.com/FHIRProxy/api/FHIR/R4"
+    },
+    {
+      "alias": "yale-new-haven-health-yale-medical-group",
+      "title": "Yale New Haven Health/Yale Medical Group",
+      "endpoint_url": "https://patientfhirapis.ynhh.org/PFF/api/FHIR/R4"
+    },
+    {
+      "alias": "yuma",
+      "title": "Yuma",
+      "endpoint_url": "https://yrmccare1.yumaregional.org/FHIR/api/FHIR/R4"
+    }
+  ]
+}
