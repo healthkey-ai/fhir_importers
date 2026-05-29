@@ -12,6 +12,7 @@ from app.routers import get_connections_repo, router as epic_router
 from app.service import EpicAuthService
 
 from .fakes import (
+    FakeAirflowClient,
     FakeEpicClient,
     InMemoryConnectionsRepository,
     InMemoryStateStore,
@@ -79,6 +80,11 @@ def token_verifier() -> StaticTokenVerifier:
 
 
 @pytest.fixture
+def airflow_client() -> FakeAirflowClient:
+    return FakeAirflowClient()
+
+
+@pytest.fixture
 def service(settings, epic_client, state_store, organizations) -> EpicAuthService:
     # `assertion_builder` is injected so tests don't need a real PEM on disk.
     return EpicAuthService(
@@ -92,11 +98,13 @@ def service(settings, epic_client, state_store, organizations) -> EpicAuthServic
 
 @pytest.fixture
 def app(
+    settings,
     service,
     organizations,
     connections_repo,
     cipher,
     token_verifier,
+    airflow_client,
 ) -> FastAPI:
     test_app = FastAPI()
     test_app.include_router(epic_router)
@@ -105,10 +113,12 @@ def app(
     async def health() -> dict[str, str]:
         return {"status": "ok"}
 
+    test_app.state.settings = settings
     test_app.state.epic_auth_service = service
     test_app.state.organizations = organizations
     test_app.state.token_cipher = cipher
     test_app.state.token_verifier = token_verifier
+    test_app.state.airflow_client = airflow_client
 
     async def _override_repo():
         yield connections_repo

@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
 
+from app.airflow import AirflowDagRunState, AirflowError, BaseAirflowClient
 from app.auth import BaseTokenVerifier
 from app.client import BaseEpicClient, EpicTokens, SmartConfiguration
 from app.connections import BaseConnectionsRepository, ConnectionMetadata
@@ -127,3 +128,20 @@ class StaticTokenVerifier(BaseTokenVerifier):
                 detail="Invalid or expired token",
             )
         return self._uid
+
+
+class FakeAirflowClient(BaseAirflowClient):
+    def __init__(self) -> None:
+        self.calls: list[dict] = []
+        self.next_dag_run_id: str = "fake-run-1"
+        self.fail_next: bool = False
+
+    async def create_dag_run(self, dag: str, dag_run_prefix: str, conf: dict | None) -> str:
+        self.calls.append({"dag": dag, "prefix": dag_run_prefix, "conf": conf or {}})
+        if self.fail_next:
+            self.fail_next = False
+            raise AirflowError("forced failure", url="http://test/airflow", method="post")
+        return self.next_dag_run_id
+
+    async def get_dag_run_state(self, dag: str, dag_run_id: str) -> AirflowDagRunState:
+        return AirflowDagRunState.RUNNING

@@ -1,7 +1,9 @@
+import logging
 from collections.abc import AsyncIterator
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
+from .airflow import BaseAirflowClient
 from .auth import get_current_user_uid
 from .connections import BaseConnectionsRepository, ConnectionsRepository
 from .organizations import OrganizationRegistry, UnknownOrganization
@@ -12,8 +14,14 @@ from .schemas import (
     OrganizationOut,
     StartRequest,
     StartResponse,
+    SyncResponse,
 )
 from .service import EpicAuthService, InvalidStateError
+
+
+_logger = logging.getLogger(__name__)
+
+FHIR_EXTRACT_DAG = "fhir_extract"
 
 
 def get_epic_auth_service(request: Request) -> EpicAuthService:
@@ -22,6 +30,22 @@ def get_epic_auth_service(request: Request) -> EpicAuthService:
 
 def get_organizations(request: Request) -> OrganizationRegistry:
     return request.app.state.organizations
+
+
+def get_airflow_client(request: Request) -> BaseAirflowClient:
+    return request.app.state.airflow_client
+
+
+def _dag_run_prefix(uid: str, organization_alias: str) -> str:
+    return f"{uid}__{organization_alias}"
+
+
+def _dag_conf(uid: str, organization_alias: str, epic_patient_id: str | None) -> dict:
+    return {
+        "user_uid": uid,
+        "organization_alias": organization_alias,
+        "epic_patient_id": epic_patient_id,
+    }
 
 
 async def get_connections_repo(request: Request) -> AsyncIterator[BaseConnectionsRepository]:
@@ -97,6 +121,7 @@ async def finish(
     uid: str = Depends(get_current_user_uid),
     repo: BaseConnectionsRepository = Depends(get_connections_repo),
     service: EpicAuthService = Depends(get_epic_auth_service),
+    airflow: BaseAirflowClient = Depends(get_airflow_client),
 ) -> FinishResponse:
     try:
         result = await service.finish(body.code, body.state)
@@ -113,6 +138,18 @@ async def finish(
         patient=result.patient,
         expires_at=result.expires_at,
     )
+
+    # Best-effort: connection is saved regardless. /sync is available for retries.
+    try:
+        dag_run_id = await airflow.create_dag_run(
+            dag=FHIR_EXTRACT_DAG,
+            dag_run_prefix=_dag_run_prefix(uid, conn.organization_alias),
+            conf=_dag_conf(uid, conn.organization_alias, conn.patient),
+        )
+        _logger.info("Triggered %s DAG run=%s", FHIR_EXTRACT_DAG, dag_run_id)
+    except Exception:
+        _logger.exception("Failed to trigger %s DAG (connection persisted)", FHIR_EXTRACT_DAG)
+
     return FinishResponse(
         organization_alias=conn.organization_alias,
         patient=conn.patient,
@@ -120,3 +157,26 @@ async def finish(
         status="connected",
         connected_at=conn.connected_at,
     )
+
+
+@router.post("/connections/{organization_alias}/sync", response_model=SyncResponse, status_code=status.HTTP_202_ACCEPTED)
+async def sync_connection(
+    organization_alias: str,
+    uid: str = Depends(get_current_user_uid),
+    repo: BaseConnectionsRepository = Depends(get_connections_repo),
+    airflow: BaseAirflowClient = Depends(get_airflow_client),
+) -> SyncResponse:
+    items = await repo.list_for_user(uid)
+    conn = next((c for c in items if c.organization_alias == organization_alias), None)
+    if conn is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No connection for organization: {organization_alias}",
+        )
+
+    dag_run_id = await airflow.create_dag_run(
+        dag=FHIR_EXTRACT_DAG,
+        dag_run_prefix=_dag_run_prefix(uid, organization_alias),
+        conf=_dag_conf(uid, organization_alias, conn.patient),
+    )
+    return SyncResponse(organization_alias=organization_alias, dag_run_id=dag_run_id)

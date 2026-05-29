@@ -55,6 +55,11 @@ class Settings(BaseSettings):
     #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
     token_encryption_key: str = ""
 
+    # Airflow — triggered after /auth/finish and from the explicit resync endpoint.
+    airflow_url: str = ""
+    airflow_username: str = ""
+    airflow_password: str = ""
+
     # Directory holding the federation remote bundle (remoteEntry.js + chunks).
     # The image's multi-stage build drops the Vite output here; the app mounts it
     # at /remote via StaticFiles. If the directory is missing (e.g. running

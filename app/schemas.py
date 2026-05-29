@@ -37,3 +37,8 @@ class FinishResponse(BaseModel):
     scope: str | None = None
     status: str
     connected_at: datetime
+
+
+class SyncResponse(BaseModel):
+    organization_alias: str
+    dag_run_id: str
