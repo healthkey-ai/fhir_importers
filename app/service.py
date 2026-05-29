@@ -46,7 +46,8 @@ class EpicAuthService:
 
     async def start(self, organization_alias: str) -> StartAuthResult:
         org = self._organizations.get(organization_alias)
-        smart = await self._get_smart_configuration(org.endpoint_url)
+        epic = self._settings.epic_config_for_org(org.alias)
+        smart = await self._get_smart_configuration(org.endpoint_url, epic.client_id)
 
         code_verifier = base64.urlsafe_b64encode(secrets.token_bytes(32)).decode("utf-8").rstrip("=")
         code_challenge = base64.urlsafe_b64encode(
@@ -66,9 +67,9 @@ class EpicAuthService:
 
         params = {
             "response_type": "code",
-            "client_id": self._settings.client_id,
-            "redirect_uri": self._settings.redirect_uri,
-            "scope": self._settings.scopes,
+            "client_id": epic.client_id,
+            "redirect_uri": epic.redirect_uri,
+            "scope": epic.scopes,
             "state": state,
             "nonce": nonce,
             "code_challenge": code_challenge,
@@ -84,16 +85,18 @@ class EpicAuthService:
         if pending is None:
             raise InvalidStateError("Unknown or expired state")
 
+        epic = self._settings.epic_config_for_org(pending.organization_alias)
         assertion = build_client_assertion(
-            client_id=self._settings.client_id,
+            client_id=epic.client_id,
             token_endpoint=pending.token_endpoint,
-            private_key_pem_path=self._settings.private_key_path,
-            kid=self._settings.jwks_kid,
+            private_key_pem_path=epic.private_key_path,
+            kid=epic.jwks_kid,
         )
         tokens = await self._client.exchange_authorization_code(
             token_endpoint=pending.token_endpoint,
             code=code,
-            redirect_uri=self._settings.redirect_uri,
+            redirect_uri=epic.redirect_uri,
+            client_id=epic.client_id,
             code_verifier=pending.code_verifier,
             client_assertion=assertion,
         )
@@ -109,7 +112,8 @@ class EpicAuthService:
 
     async def _validate_id_token(self, organization_alias: str, id_token: str) -> None:
         org = self._organizations.get(organization_alias)
-        smart = await self._get_smart_configuration(org.endpoint_url)
+        epic = self._settings.epic_config_for_org(org.alias)
+        smart = await self._get_smart_configuration(org.endpoint_url, epic.client_id)
         if not smart.jwks_uri or not smart.issuer:
             raise ValueError("smart-configuration is missing jwks_uri or issuer")
 
@@ -121,7 +125,7 @@ class EpicAuthService:
                 id_token,
                 signing_key,
                 algorithms=["RS256", "RS384", "RS512", "ES256", "ES384"],
-                audience=self._settings.client_id,
+                audience=epic.client_id,
                 issuer=smart.issuer,
                 options={"require": ["exp", "iat", "aud", "iss"]},
                 leeway=60,
@@ -130,7 +134,7 @@ class EpicAuthService:
         claims = await asyncio.to_thread(_decode)
         _logger.info("id_token validated for organization=%s sub=%s", organization_alias, claims.get("sub"))
 
-    async def _get_smart_configuration(self, base_url: str) -> SmartConfiguration:
+    async def _get_smart_configuration(self, base_url: str, client_id: str) -> SmartConfiguration:
         cached = self._smart_config_cache.get(base_url)
         if cached is not None:
             return cached
@@ -138,6 +142,6 @@ class EpicAuthService:
             cached = self._smart_config_cache.get(base_url)
             if cached is not None:
                 return cached
-            smart = await self._client.get_smart_configuration(base_url)
+            smart = await self._client.get_smart_configuration(base_url, client_id)
             self._smart_config_cache[base_url] = smart
             return smart

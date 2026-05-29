@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
     http_client = httpx.AsyncClient(timeout=settings.http_timeout_seconds)
     redis_client = redis_from_url(settings.redis_url, decode_responses=True)
     state_store = RedisStateStore(redis_client, ttl_seconds=settings.state_ttl_seconds)
-    epic_client = EpicClient(client_id=settings.client_id, http=http_client)
+    epic_client = EpicClient(http=http_client)
     service = EpicAuthService(
         settings=settings,
         client=epic_client,

@@ -1,7 +1,12 @@
+import dns from "node:dns";
 import path from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { federation } from "@module-federation/vite";
+
+// Resolve localhost to 127.0.0.1 (IPv4) first, and bind explicitly to IPv4 so
+// the remote is reachable at 127.0.0.1:5178 (matches how the host is served).
+dns.setDefaultResultOrder("ipv4first");
 
 // Federation remote build. Exposes the MyChart components as a Module
 // Federation 2.0 remote. The microservice URL is baked in from VITE_API_BASE_URL
@@ -36,6 +41,7 @@ export default defineConfig({
     target: "esnext",
   },
   server: {
+    host: "127.0.0.1",
     port: 5178,
     strictPort: true,
   },

@@ -26,13 +26,12 @@ class EpicTokens:
 
 
 class EpicClient:
-    def __init__(self, client_id: str, http: httpx.AsyncClient):
-        self._client_id = client_id
+    def __init__(self, http: httpx.AsyncClient):
         self._http = http
 
-    async def get_smart_configuration(self, base_url: str) -> SmartConfiguration:
+    async def get_smart_configuration(self, base_url: str, client_id: str) -> SmartConfiguration:
         url = base_url.rstrip("/") + "/.well-known/smart-configuration"
-        headers = {"Accept": "application/json", "Epic-Client-ID": self._client_id}
+        headers = {"Accept": "application/json", "Epic-Client-ID": client_id}
         response = await self._http.get(url, headers=headers)
         response.raise_for_status()
         data = response.json()
@@ -48,6 +47,7 @@ class EpicClient:
         token_endpoint: str,
         code: str,
         redirect_uri: str,
+        client_id: str,
         code_verifier: str,
         client_assertion: str,
     ) -> EpicTokens:
@@ -55,7 +55,7 @@ class EpicClient:
             "grant_type": "authorization_code",
             "code": code,
             "redirect_uri": redirect_uri,
-            "client_id": self._client_id,
+            "client_id": client_id,
             "code_verifier": code_verifier,
             "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
             "client_assertion": client_assertion,
