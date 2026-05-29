@@ -16,3 +16,11 @@ README.md
 Dockerfile
 docker-compose.yml
 .dockerignore
+# Frontend: Dockerfile's node stage builds these itself; shipping them blows up
+# the build context (node_modules alone is ~100MB) and risks shadowing CI builds.
+frontend/node_modules/
+frontend/dist/
+frontend/dist-remote/
+# Vendored reference repos — not used in the image, but huge.
+examples/
+LOCAL_DEV.md
