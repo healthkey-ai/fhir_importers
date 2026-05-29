@@ -1,4 +1,14 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field
+
+
+class ConnectionOut(BaseModel):
+    organization_alias: str
+    patient: str | None = None
+    scope: str | None = None
+    expires_at: datetime
+    connected_at: datetime
 
 
 class OrganizationOut(BaseModel):
@@ -22,9 +32,8 @@ class FinishRequest(BaseModel):
 
 
 class FinishResponse(BaseModel):
-    access_token: str
-    refresh_token: str | None = None
-    id_token: str | None = None
-    expires_in: int
-    scope: str | None = None
+    organization_alias: str
     patient: str | None = Field(None, description="SMART-on-FHIR patient launch context, if returned")
+    scope: str | None = None
+    status: str
+    connected_at: datetime

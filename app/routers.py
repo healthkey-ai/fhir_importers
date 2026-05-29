@@ -1,7 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from .auth import get_current_user_uid
+from .connections import ConnectionsRepository
+from .db import get_session
 from .organizations import OrganizationRegistry, UnknownOrganization
 from .schemas import (
+    ConnectionOut,
     FinishRequest,
     FinishResponse,
     OrganizationOut,
@@ -22,6 +27,26 @@ def get_organizations(request: Request) -> OrganizationRegistry:
 router = APIRouter(prefix="/epic", tags=["epic-auth"])
 
 
+@router.get("/connections", response_model=list[ConnectionOut])
+async def list_connections(
+    request: Request,
+    uid: str = Depends(get_current_user_uid),
+    session: AsyncSession = Depends(get_session),
+) -> list[ConnectionOut]:
+    repo = ConnectionsRepository(session, request.app.state.token_cipher)
+    items = await repo.list_for_user(uid)
+    return [
+        ConnectionOut(
+            organization_alias=i.organization_alias,
+            patient=i.patient,
+            scope=i.scope,
+            expires_at=i.expires_at,
+            connected_at=i.connected_at,
+        )
+        for i in items
+    ]
+
+
 @router.get("/organizations", response_model=list[OrganizationOut])
 async def list_organizations(
     organizations: OrganizationRegistry = Depends(get_organizations),
@@ -30,6 +55,23 @@ async def list_organizations(
         OrganizationOut(alias=o.alias, title=o.title, endpoint_url=o.endpoint_url)
         for o in organizations.list()
     ]
+
+
+@router.delete("/connections/{organization_alias}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_connection(
+    organization_alias: str,
+    request: Request,
+    uid: str = Depends(get_current_user_uid),
+    session: AsyncSession = Depends(get_session),
+) -> Response:
+    repo = ConnectionsRepository(session, request.app.state.token_cipher)
+    deleted = await repo.delete(uid, organization_alias)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No connection for organization: {organization_alias}",
+        )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/auth/start", response_model=StartResponse)
@@ -50,17 +92,31 @@ async def start(
 @router.post("/auth/finish", response_model=FinishResponse)
 async def finish(
     body: FinishRequest,
+    request: Request,
+    uid: str = Depends(get_current_user_uid),
+    session: AsyncSession = Depends(get_session),
     service: EpicAuthService = Depends(get_epic_auth_service),
 ) -> FinishResponse:
     try:
-        tokens = await service.finish(body.code, body.state)
+        result = await service.finish(body.code, body.state)
     except InvalidStateError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    repo = ConnectionsRepository(session, request.app.state.token_cipher)
+    conn = await repo.upsert(
+        user_uid=uid,
+        organization_alias=result.organization_alias,
+        access_token=result.access_token,
+        refresh_token=result.refresh_token,
+        id_token=result.id_token,
+        scope=result.scope,
+        patient=result.patient,
+        expires_at=result.expires_at,
+    )
     return FinishResponse(
-        access_token=tokens.access_token,
-        refresh_token=tokens.refresh_token,
-        id_token=tokens.id_token,
-        expires_in=tokens.expires_in,
-        scope=tokens.scope,
-        patient=tokens.patient,
+        organization_alias=conn.organization_alias,
+        patient=conn.patient,
+        scope=conn.scope,
+        status="connected",
+        connected_at=conn.created_at,
     )

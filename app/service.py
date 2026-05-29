@@ -5,6 +5,7 @@ import logging
 import secrets
 import urllib.parse
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 
 import jwt
 from jwt import PyJWKClient
@@ -27,6 +28,17 @@ class InvalidStateError(Exception):
 class StartAuthResult:
     authorization_url: str
     state: str
+
+
+@dataclass
+class FinishResult:
+    organization_alias: str
+    access_token: str
+    refresh_token: str | None
+    id_token: str | None
+    scope: str | None
+    patient: str | None
+    expires_at: datetime
 
 
 class EpicAuthService:
@@ -80,7 +92,7 @@ class EpicAuthService:
         _logger.info("Built authorization URL for organization=%s state=%s", org.alias, state)
         return StartAuthResult(authorization_url=url, state=state)
 
-    async def finish(self, code: str, state: str) -> EpicTokens:
+    async def finish(self, code: str, state: str) -> FinishResult:
         pending = await self._state_store.pop(state)
         if pending is None:
             raise InvalidStateError("Unknown or expired state")
@@ -108,7 +120,15 @@ class EpicAuthService:
                 # Validation is diagnostic — Epic already enforced the flow. Log and continue.
                 _logger.exception("id_token validation failed for organization=%s", pending.organization_alias)
 
-        return tokens
+        return FinishResult(
+            organization_alias=pending.organization_alias,
+            access_token=tokens.access_token,
+            refresh_token=tokens.refresh_token,
+            id_token=tokens.id_token,
+            scope=tokens.scope,
+            patient=tokens.patient,
+            expires_at=datetime.now(timezone.utc) + timedelta(seconds=tokens.expires_in),
+        )
 
     async def _validate_id_token(self, organization_alias: str, id_token: str) -> None:
         org = self._organizations.get(organization_alias)

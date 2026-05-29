@@ -6,13 +6,14 @@ export interface Organization {
   endpoint_url: string;
 }
 
-export interface FinishResult {
-  access_token: string;
-  refresh_token: string | null;
-  id_token: string | null;
-  expires_in: number;
-  scope: string | null;
+// Returned by /epic/auth/finish. Tokens are persisted server-side and never
+// returned to the browser — only this non-sensitive connection metadata.
+export interface ConnectionResult {
+  organization_alias: string;
   patient: string | null;
+  scope: string | null;
+  status: string;
+  connected_at: string;
 }
 
 export interface MyChartBaseProps {
@@ -27,8 +28,21 @@ export interface MyChartBaseProps {
   className?: string;
 }
 
+export interface Connection {
+  organization_alias: string;
+  patient: string | null;
+  scope: string | null;
+  expires_at: string;
+  connected_at: string;
+}
+
 export interface ConnectMyChartProps extends MyChartBaseProps {
   /** Called if loading organizations or starting the auth flow fails. */
+  onError?: (error: Error) => void;
+}
+
+export interface MyChartConnectionsProps extends MyChartBaseProps {
+  /** Called if listing or deleting connections fails. */
   onError?: (error: Error) => void;
 }
 
@@ -37,8 +51,8 @@ export interface MyChartCallbackProps extends MyChartBaseProps {
   code?: string;
   /** OAuth state. Falls back to `?state=` in the current URL. */
   state?: string;
-  /** Called once tokens are successfully retrieved from /epic/auth/finish. */
-  onSuccess?: (result: FinishResult) => void;
+  /** Called once the connection is persisted by /epic/auth/finish. */
+  onSuccess?: (result: ConnectionResult) => void;
   /** Called if the token exchange fails. */
   onError?: (error: Error) => void;
 }

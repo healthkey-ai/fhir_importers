@@ -157,3 +157,42 @@
   border-radius: 4px;
   font-size: 0.9em;
 }
+
+.mychart-root .mychart-connection-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+
+.mychart-root .mychart-connection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.mychart-root .mychart-connection-title {
+  font-weight: 600;
+}
+
+.mychart-root .mychart-connection-meta {
+  font-size: 0.85em;
+  color: #718096;
+}
+
+.mychart-root .mychart-disconnect {
+  margin: 0;
+  min-width: auto;
+  padding: 0.4rem 0.8rem;
+  background: white;
+  color: #c53030;
+  border-color: #fc8181;
+}
+
+.mychart-root .mychart-disconnect:hover:not(:disabled) {
+  background: #fff5f5;
+}

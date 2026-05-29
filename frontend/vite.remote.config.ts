@@ -20,6 +20,7 @@ export default defineConfig({
       exposes: {
         "./ConnectMyChart": "./src/federation/ConnectMyChart.tsx",
         "./MyChartCallback": "./src/federation/MyChartCallback.tsx",
+        "./MyChartConnections": "./src/federation/MyChartConnections.tsx",
         "./types": "./src/federation/types.ts",
       },
       shared: {

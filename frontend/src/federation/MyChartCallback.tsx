@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MyChartProvider } from "./MyChartProvider";
 import { useMyChartClient } from "./MyChartContext";
-import type { FinishResult, MyChartCallbackProps } from "./types";
+import type { ConnectionResult, MyChartCallbackProps } from "./types";
 
 type Status = "pending" | "ok" | "error";
 
@@ -21,7 +21,7 @@ function MyChartCallbackInner({
   const epicErrorDescription = params.get("error_description");
 
   const [status, setStatus] = useState<Status>("pending");
-  const [result, setResult] = useState<FinishResult | null>(null);
+  const [result, setResult] = useState<ConnectionResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // The authorization code is single-use and the backend pops state atomically.
@@ -72,17 +72,18 @@ function MyChartCallbackInner({
       {status === "ok" && result && (
         <>
           <div className="mychart-success">MyChart connected successfully.</div>
-          {/* Tokens are intentionally not displayed; they are handed to the host
-              via onSuccess for secure persistence. Only non-sensitive context. */}
+          {/* Tokens are persisted server-side; this is non-sensitive metadata. */}
           <dl>
+            <dt>Organization</dt>
+            <dd>{result.organization_alias}</dd>
             <dt>Patient</dt>
             <dd>{result.patient ?? <em>not provided</em>}</dd>
             <dt>Scope</dt>
             <dd>
               <code>{result.scope ?? "(none)"}</code>
             </dd>
-            <dt>Access expires in</dt>
-            <dd>{result.expires_in}s</dd>
+            <dt>Connected</dt>
+            <dd>{new Date(result.connected_at).toLocaleString()}</dd>
           </dl>
         </>
       )}

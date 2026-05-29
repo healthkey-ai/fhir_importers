@@ -1,10 +1,12 @@
 import type { AxiosInstance } from "axios";
-import type { FinishResult, Organization } from "./types";
+import type { Connection, ConnectionResult, Organization } from "./types";
 
 export interface MyChartClient {
   listOrganizations: () => Promise<Organization[]>;
   start: (organizationAlias: string) => Promise<{ authorization_url: string; state: string }>;
-  finish: (code: string, state: string) => Promise<FinishResult>;
+  finish: (code: string, state: string) => Promise<ConnectionResult>;
+  listConnections: () => Promise<Connection[]>;
+  deleteConnection: (organizationAlias: string) => Promise<void>;
 }
 
 // Pull a FastAPI `{ "detail": ... }` message out of an axios error without
@@ -37,6 +39,14 @@ export function createMyChartClient(apiClient: AxiosInstance, apiBasePath = ""):
     }
   }
 
+  async function del(path: string): Promise<void> {
+    try {
+      await apiClient.delete(`${base}${path}`);
+    } catch (e) {
+      throw new Error(detail(e));
+    }
+  }
+
   return {
     listOrganizations: () => get<Organization[]>("/epic/organizations"),
     start: (organizationAlias: string) =>
@@ -44,6 +54,9 @@ export function createMyChartClient(apiClient: AxiosInstance, apiBasePath = ""):
         organization_alias: organizationAlias,
       }),
     finish: (code: string, state: string) =>
-      post<FinishResult>("/epic/auth/finish", { code, state }),
+      post<ConnectionResult>("/epic/auth/finish", { code, state }),
+    listConnections: () => get<Connection[]>("/epic/connections"),
+    deleteConnection: (organizationAlias: string) =>
+      del(`/epic/connections/${encodeURIComponent(organizationAlias)}`),
   };
 }

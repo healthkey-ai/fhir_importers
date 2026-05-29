@@ -1,17 +1,25 @@
 import logging
+import mimetypes
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from redis.asyncio import from_url as redis_from_url
 
 from .client import EpicClient
 from .config import Settings
+from .crypto import TokenCipher
+from .db import create_engine, create_sessionmaker, init_db
 from .organizations import OrganizationRegistry
 from .routers import router as epic_router
 from .service import EpicAuthService
 from .state_store import RedisStateStore
+
+# ES modules need a JS content-type; Python's mimetypes doesn't always ship .mjs.
+mimetypes.add_type("application/javascript", ".mjs")
 
 
 logging.basicConfig(
@@ -37,15 +45,21 @@ async def lifespan(app: FastAPI):
         organizations=organizations,
     )
 
+    engine = create_engine(settings.database_url)
+    await init_db(engine)
+
     app.state.settings = settings
     app.state.organizations = organizations
     app.state.epic_auth_service = service
+    app.state.db_sessionmaker = create_sessionmaker(engine)
+    app.state.token_cipher = TokenCipher(settings.token_encryption_key)
 
     try:
         yield
     finally:
         await http_client.aclose()
         await redis_client.aclose()
+        await engine.dispose()
 
 
 app = FastAPI(title="MyChart Integration Service", lifespan=lifespan)
@@ -53,10 +67,23 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in settings.cors_allowed_origins.split(",") if o.strip()],
     allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
 )
 app.include_router(epic_router)
+
+
+# Serve the federation remote bundle (remoteEntry.js + chunks) at /remote so the
+# host loads it from `<service-url>/remote/remoteEntry.js`. CORSMiddleware above
+# applies to this mount too. If the directory is missing (e.g. uvicorn run
+# outside the image without `npm run build:remote`), skip mounting.
+_remote_dir = Path(settings.remote_bundle_dir)
+if _remote_dir.is_dir():
+    app.mount("/remote", StaticFiles(directory=str(_remote_dir)), name="remote")
+else:
+    logging.getLogger(__name__).info(
+        "remote_bundle_dir %s does not exist; /remote mount skipped", _remote_dir
+    )
 
 
 @app.get("/health", tags=["meta"])

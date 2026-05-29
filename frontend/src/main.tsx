@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import axios from "axios";
 import { ConnectMyChart } from "./federation/ConnectMyChart";
 import { MyChartCallback } from "./federation/MyChartCallback";
+import { MyChartConnections } from "./federation/MyChartConnections";
 
 // Standalone dev harness. It plays the role of the HOST: it constructs the
 // (optionally authenticated) axios client and injects it, the same way ht-phr
@@ -26,9 +27,10 @@ function DevHarness() {
         apiClient={apiClient}
         onSuccess={(r) =>
           console.log("[harness] onSuccess", {
+            organization: r.organization_alias,
             patient: r.patient,
             scope: r.scope,
-            expires_in: r.expires_in,
+            status: r.status,
           })
         }
         onError={(e) => console.error("[harness] onError", e.message)}
@@ -36,10 +38,16 @@ function DevHarness() {
     );
   }
   return (
-    <ConnectMyChart
-      apiClient={apiClient}
-      onError={(e) => console.error("[harness] onError", e.message)}
-    />
+    <>
+      <MyChartConnections
+        apiClient={apiClient}
+        onError={(e) => console.error("[harness] connections onError", e.message)}
+      />
+      <ConnectMyChart
+        apiClient={apiClient}
+        onError={(e) => console.error("[harness] onError", e.message)}
+      />
+    </>
   );
 }
 
