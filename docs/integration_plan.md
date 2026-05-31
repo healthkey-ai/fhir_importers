@@ -133,9 +133,12 @@ Agreed design decisions:
   `person_id` and ctomop enforces `can_access_patient()`.
 - **fhir_importers never stores `person_id`** — ctomop is the source of truth for person linkage.
   ht-phr's `User.phr_person_id` is therefore optional/cache-only and not required for this flow.
-- **Service-to-service transport auth** for `/api/fhir/sync/`: reuse ctomop's existing
-  `ServiceTokenAuthentication` (pre-shared bearer) or OAuth2 `client_credentials` (`ScopedTokenPermission`).
-  Default: **OAuth2 client_credentials** (already used by `upload_fhir`, consistent and revocable).
+- **Service-to-service transport auth** for `/api/fhir/sync/`: **mirror hk-labs exactly** — copy
+  `hk-labs backend/apps/labs/ctomop_client.py`. Identity travels in the body (`actor_iss`/`actor_sub`);
+  transport is authenticated with `CTOMOP_SERVICE_TOKEN` — an OAuth2 bearer scoped `patient/*.write`
+  (so it satisfies the client_credentials intent while staying byte-for-byte consistent with the proven
+  hk-labs client). The user's Firebase token may be forwarded instead when present. Config keys reused
+  verbatim: `CTOMOP_BASE_URL` / `CTOMOP_SYNC_URL`, `CTOMOP_SERVICE_TOKEN`.
 - **Both modes supported:** standalone (local `urn:local` identities, own login, optionally no
   ctomop) and integrated (Firebase JWT forwarded by ht-phr) — a settings change, not code.
 
@@ -155,28 +158,34 @@ Agreed design decisions:
     fetched, created/updated downstream), `error`, started/finished.
 - **`EpicFhirClient` (new):** use the Connection's token to call Epic FHIR (`Patient/$everything` or
   per-resource); pagination; auto-refresh via `refresh_token` (scope already has `offline_access`).
-- **FHIR → ctomop mapping (new):** normalize raw Epic FHIR into ctomop's expected bundle shape
-  (LOINC Observations map cleanly; oncology-specific extensions are a known gap — see §7).
-- **`CtomopSyncClient` (new):** obtain a ctomop `client_credentials` token; `POST` the bundle to
-  `/api/fhir/sync/` with `actor_iss`/`actor_sub` and provenance `EHR_SYNC`; record results on `SyncJob`.
+- **FHIR → ctomop mapping (new):** normalize raw Epic FHIR into ctomop's expected bundle shape.
+  **First-cut scope (decided):** demographics + labs (LOINC Observations) + conditions + medications
+  only — Patient→Person, Observation→Measurement, Condition→ConditionOccurrence,
+  MedicationStatement→DrugExposure. Oncology-specific enrichment (ECOG, stage, ER/PR/HER2 biomarkers,
+  therapy-line episodes) is **explicitly deferred** and tracked in **issue #10**.
+- **`CtomopSyncClient` (new):** **copy hk-labs' `ctomop_client.py`**; `POST` the bundle to
+  `CTOMOP_SYNC_URL` (→ `/api/fhir/sync/`) with `actor_iss`/`actor_sub` and provenance `EHR_SYNC`,
+  authenticated by `CTOMOP_SERVICE_TOKEN`; record results on `SyncJob`.
 - **Orchestration (Celery, Django-native):** `/epic/auth/finish` persists `Connection` + enqueues a
   `SyncJob`. New endpoints: `GET /connections`, `POST /connections/{id}/sync` (re-sync),
   `GET /sync/{job_id}` (poll). All protected by `PartnerAuthentication` so a caller only sees their
   own Identity's connections.
-- **Config:** ctomop base URL + client id/secret, Firebase project id, token-encryption key,
-  `DATABASE_URL`, `PARTNER_AUTH_PROVIDERS`; CORS allows ht-phr origins.
+- **Config:** `CTOMOP_BASE_URL`/`CTOMOP_SYNC_URL` + `CTOMOP_SERVICE_TOKEN`, Firebase project id,
+  token-encryption key, `DATABASE_URL`, `PARTNER_AUTH_PROVIDERS`; CORS allows ht-phr origins.
+- **Deploy target (decided):** **GCP Cloud Run** matching ht-phr/hk-labs — Cloud SQL (Postgres),
+  Secret Manager, GitHub Actions OIDC deploy; reuse ht-phr's deploy pattern.
 - **Frontend remote:** keep `ConnectMyChart`/`MyChartCallback`; on `onSuccess`, poll
   `GET /sync/{job_id}` and show progress; optionally expose `MyChartConnections`. Tokens never
   surface to the host.
 
 ### 5.2 ctomop — small, additive
-- **`POST /api/fhir/sync/` (new):** mirror `lab_results/sync.py` — accept a FHIR bundle +
+- **`POST /api/fhir/sync/` (new, decided):** mirror `lab_results/sync.py` — accept a FHIR bundle +
   `actor_iss`/`actor_sub` (+ optional `person_id` for on-behalf-of), resolve Person via the existing
-  identity path, reuse the `upload_fhir` mapping internally, return `person_id` + created ids.
-  *(Alternative: extend `upload_fhir` to accept `actor_iss/actor_sub`; a dedicated endpoint is cleaner
-  and matches the established sync pattern.)*
-- **Service credential:** register an OAuth2 Application (or service token) for `fhir_importers`
-  (`patient/*.write`, correct org); confirm org scoping for a non-user service client.
+  identity path (`resolve_or_create_person` / `_resolve_person_from_identity`), reuse the `upload_fhir`
+  mapping internally, return `person_id` + created ids. Permission: `ScopedTokenPermission`
+  (`patient/*.write`), same as the lab-results sync view.
+- **Service credential:** provision the `patient/*.write` OAuth2 bearer that `fhir_importers` presents
+  as `CTOMOP_SERVICE_TOKEN` (same mechanism hk-labs uses), tied to the correct org.
 - Optional: store `epic_patient_id` as a secondary external id on `Person` for provenance/dedupe
   (not the linkage key — identity is).
 
@@ -201,28 +210,37 @@ Agreed design decisions:
   ctomop `/api/fhir/sync/` endpoint + service credential, `CtomopSyncClient` posting a sample bundle.
   Proves the identity-resolved ingest path.
 - **Phase 3 — Epic FHIR fetch:** `EpicFhirClient` with `$everything`, pagination, token refresh.
-- **Phase 4 — Map + orchestrate + display:** FHIR→ctomop mapping, Celery sync + status endpoint,
-  ht-phr polls and renders synced clinical data. **First full end-to-end demo.**
+- **Phase 4 — Map + orchestrate + display:** FHIR→ctomop mapping for the decided first-cut scope
+  (demographics + labs + conditions + meds), Celery sync + status endpoint, ht-phr polls and renders
+  synced clinical data. **First full end-to-end demo.** (Oncology enrichment → issue #10, later phase.)
 - **Phase 5 — Hardening:** token encryption/KMS, retries/backoff, idempotent re-sync, error surfacing,
   PHI security review, deploy wiring for staging; standalone-mode smoke test.
 
-## 7. Risks & Open Questions
+## 7. Resolved Decisions & Residual Risks
 
-- **Mapping fidelity (biggest):** raw Epic FHIR lacks ctomop's custom extensions (ECOG, therapy-line,
-  biomarkers); demographics/labs(LOINC)/conditions/meds map reasonably, oncology-specific `PatientInfo`
-  fields won't populate without enrichment. Scope mapping explicitly; start narrow.
-- **Django port effort:** rewriting the FastAPI broker is real work, but it is small (~10 files) and
-  the port buys verbatim reuse of the identity stack + the future `healthkey-identity` package.
-- **Token security:** Epic refresh tokens are long-lived PHI-adjacent secrets — encrypt at rest, never
-  return to the browser (this design removes browser token custody).
-- **fhir_importers gains state + infra:** Postgres + Celery + secrets (Epic private key, ctomop
-  credential, encryption key). Confirm deploy target (current `.env` references a GCP/`healthkey-etl` context).
-- **Epic app registration:** production client + redirect URIs must match ht-phr's hosted callback per env.
-- **Person provisioning on first connect:** `_ensure_person` creates a `Person` from JWT claims with
-  minimal demographics; confirm that is acceptable before the first Epic demographics arrive, and that
-  re-sync updates (not duplicates) it.
-- **Confirm:** dedicated `/api/fhir/sync/` endpoint vs. extending `upload_fhir` (plan recommends the
-  dedicated endpoint), and service-token vs. client_credentials transport (plan recommends client_credentials).
+### Resolved decisions
+- **Connector stack:** port `fhir_importers` to **Django/DRF**; copy ctomop's Identity stack verbatim.
+- **First-cut mapping scope:** **demographics + labs + conditions + medications**. Oncology enrichment
+  (ECOG, stage, ER/PR/HER2, therapy-line episodes) **deferred → issue #10**.
+- **Ingest endpoint:** new dedicated **`POST /api/fhir/sync/`** in ctomop (mirrors `lab_results/sync.py`).
+- **Service-to-service auth:** **same as hk-labs** — `actor_iss`/`actor_sub` in the body +
+  `CTOMOP_SERVICE_TOKEN` (OAuth2 `patient/*.write` bearer); copy `ctomop_client.py`.
+- **Deploy target:** **GCP Cloud Run** + Cloud SQL + Secret Manager, matching ht-phr/hk-labs.
+- **Person provisioning:** non-issue — ctomop's `PartnerAuthentication` runs `_ensure_person` on every
+  authenticated request, so the `Person` already exists (created on the patient's first `useCtomopApi`
+  call) before any Epic sync. Sync resolves the same `(iss, sub)`; no duplicate.
+
+### Residual risks (no longer blocking, manage during build)
+- **Mapping fidelity for oncology:** the deferred enrichment (#10) is the main known limitation — until
+  it lands, oncology-specific `PatientInfo` fields stay empty for Epic-sourced patients. Communicate this
+  to clinical stakeholders so it isn't mistaken for missing data.
+- **Idempotent re-sync:** re-running a sync must update, not duplicate, OMOP rows. ctomop's existing
+  upsert keys (per measurement/condition/drug) should cover this; verify with a re-sync test in Phase 2.
+- **Token security:** Epic refresh tokens are long-lived PHI-adjacent secrets — encrypted at rest
+  (Fernet/KMS), never returned to the browser. Covered by design; verify in the Phase 5 security review.
+- **Epic app registration (operational):** production Epic client id + redirect URIs must match
+  ht-phr's hosted callback route per environment (dev/staging/prod) — an action item for whoever owns
+  the Epic developer account, not a design fork.
 
 ## 8. Definition of Done
 
