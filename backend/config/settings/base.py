@@ -118,6 +118,12 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 WHITENOISE_ALLOW_ALL_ORIGINS = True
 
+# Module Federation remote (remoteEntry.js + chunks), built into the image and
+# copied to backend/frontend_remote. Served by WhiteNoise so the ht-phr host can
+# load mychart_remote cross-origin. Absent in dev (the Vite remote server serves it).
+_frontend_remote = BASE_DIR / "frontend_remote"
+STATICFILES_DIRS = [str(_frontend_remote)] if _frontend_remote.is_dir() else []
+
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},

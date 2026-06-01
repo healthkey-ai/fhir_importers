@@ -1,6 +1,18 @@
 # HealthKey FHIR connector — Django service (GCP Cloud Run target).
-# Phase 0: backend only. The Module Federation frontend remote is wired in
-# Phase 1 (mirroring hk-labs' two-stage build at that point).
+#
+# Stage 1 builds the Module Federation remote (remoteEntry.js + chunks); stage 2
+# is the Django runtime, which serves that remote via WhiteNoise so the ht-phr
+# host can load mychart_remote cross-origin.
+
+# Stage 1: build the Module Federation remote
+FROM node:22-alpine AS frontend-build
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build:remote
+
+# Stage 2: Python runtime
 FROM python:3.12-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -18,6 +30,9 @@ COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ ./
+
+# Module Federation remote entry (remoteEntry.js + chunks) → served by WhiteNoise
+COPY --from=frontend-build /app/frontend/dist/remote ./frontend_remote
 
 RUN python manage.py collectstatic --noinput
 
