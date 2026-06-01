@@ -52,14 +52,19 @@ def test_run_sync_posts_bundle_and_records_result(user):
     fake = ctomop_client.FhirSyncResult(
         person_id=42, measurement_ids=[1], condition_ids=[2], drug_exposure_ids=[],
     )
-    with patch("apps.epic.tasks.ctomop_client.sync_fhir_bundle", return_value=fake) as m:
+    bundle = {"resourceType": "Bundle", "entry": [
+        {"resource": {"resourceType": "Patient"}},
+        {"resource": {"resourceType": "Observation"}},
+    ]}
+    with patch("apps.epic.tasks.build_bundle_for_connection", return_value=bundle), \
+         patch("apps.epic.tasks.ctomop_client.sync_fhir_bundle", return_value=fake) as m:
         tasks.run_sync(job.id)
 
     job.refresh_from_db()
     assert job.status == SyncJob.SUCCEEDED
     assert job.person_id == 42
     assert job.created_count == 2
-    assert job.resources_fetched > 0
+    assert job.resources_fetched == 2
     assert job.finished_at is not None
     # Identity is forwarded as actor_iss/actor_sub (connector stores no person_id).
     kwargs = m.call_args.kwargs
@@ -71,12 +76,23 @@ def test_run_sync_posts_bundle_and_records_result(user):
 def test_run_sync_records_failure(user):
     conn = Connection.objects.create(identity=user, org_alias="org")
     job = SyncJob.objects.create(connection=conn)
-    with patch("apps.epic.tasks.ctomop_client.sync_fhir_bundle",
+    bundle = {"resourceType": "Bundle", "entry": []}
+    with patch("apps.epic.tasks.build_bundle_for_connection", return_value=bundle), \
+         patch("apps.epic.tasks.ctomop_client.sync_fhir_bundle",
                side_effect=ctomop_client.CtomopSyncError("boom")):
         tasks.run_sync(job.id)
     job.refresh_from_db()
     assert job.status == SyncJob.FAILED
     assert "boom" in job.error
+
+    # A fetch failure is also recorded on the job (not raised).
+    job2 = SyncJob.objects.create(connection=conn)
+    with patch("apps.epic.tasks.build_bundle_for_connection",
+               side_effect=RuntimeError("epic down")):
+        tasks.run_sync(job2.id)
+    job2.refresh_from_db()
+    assert job2.status == SyncJob.FAILED
+    assert "epic down" in job2.error
 
 
 @pytest.mark.django_db

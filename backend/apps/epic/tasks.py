@@ -1,8 +1,8 @@
 """Background sync: connector → ctomop.
 
-Phase 2 proves the identity-resolved ingest path using a SAMPLE bundle. Phase 3
-replaces _build_bundle() with a real Epic FHIR fetch (EpicFhirClient) using the
-Connection's stored token.
+Fetches the patient's FHIR compartment from Epic (using the Connection's stored
+token, refreshing if needed) and posts it to ctomop's identity-resolved
+/api/fhir/sync/.
 """
 import logging
 
@@ -10,42 +10,14 @@ from celery import shared_task
 from django.utils import timezone
 
 from . import ctomop_client
-from .models import Connection, SyncJob
+from .fetch import build_bundle_for_connection
+from .models import SyncJob
 
 logger = logging.getLogger(__name__)
 
 
-def _sample_bundle(connection: Connection) -> dict:
-    """Placeholder FHIR R4 Bundle until Epic fetch lands in Phase 3."""
-    return {
-        "resourceType": "Bundle",
-        "type": "collection",
-        "entry": [
-            {"resource": {
-                "resourceType": "Patient",
-                "id": connection.epic_patient_id or "sample",
-                "name": [{"family": "Sample", "given": ["Connected"]}],
-                "birthDate": "1980-01-01",
-                "gender": "unknown",
-            }},
-            {"resource": {
-                "resourceType": "Observation",
-                "code": {"coding": [{"system": "http://loinc.org", "code": "718-7",
-                                     "display": "Hemoglobin"}]},
-                "effectiveDateTime": "2026-05-01",
-                "valueQuantity": {"value": 13.5, "unit": "g/dL"},
-            }},
-        ],
-    }
-
-
-def _build_bundle(connection: Connection) -> dict:
-    # Phase 3: fetch from Epic with EpicFhirClient(connection.access_token).
-    return _sample_bundle(connection)
-
-
 def run_sync(job_id: int) -> None:
-    """Execute a SyncJob: build a bundle and post it to ctomop."""
+    """Execute a SyncJob: fetch the Epic bundle and post it to ctomop."""
     job = SyncJob.objects.select_related("connection", "connection__identity").get(pk=job_id)
     job.status = SyncJob.RUNNING
     job.started_at = timezone.now()
@@ -54,7 +26,7 @@ def run_sync(job_id: int) -> None:
     conn = job.connection
     identity = conn.identity
     try:
-        bundle = _build_bundle(conn)
+        bundle = build_bundle_for_connection(conn)
         result = ctomop_client.sync_fhir_bundle(
             bundle=bundle,
             actor_iss=identity.issuer,

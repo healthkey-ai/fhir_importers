@@ -117,6 +117,17 @@ class EpicAuthService:
 
         return tokens, pending.organization_alias
 
+    def smart_config_for_org(self, organization_alias: str):
+        """Return (org, epic_credentials, SmartConfiguration) for an org alias.
+
+        Used by the FHIR fetch path to discover the token endpoint (refresh)
+        and the FHIR base URL.
+        """
+        org = self._organizations.get(organization_alias)
+        epic = epic_config_for_org(org.alias)
+        smart = self._get_smart_configuration(org.endpoint_url, epic.client_id)
+        return org, epic, smart
+
     def _validate_id_token(self, organization_alias: str, id_token: str) -> None:
         org = self._organizations.get(organization_alias)
         epic = epic_config_for_org(org.alias)
