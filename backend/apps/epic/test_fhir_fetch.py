@@ -39,36 +39,59 @@ def user(db):
     return Identity.objects.create_user(email="fetch@example.com", password="pw-supersecret")
 
 
-# ----------------------------- $everything ------------------------------- #
-def test_fetch_everything_follows_pagination():
-    page1 = {
-        "resourceType": "Bundle",
-        "entry": [{"resource": {"resourceType": "Patient"}}],
-        "link": [{"relation": "next", "url": "https://fhir.example/next-page"}],
-    }
-    page2 = {"resourceType": "Bundle",
-             "entry": [{"resource": {"resourceType": "Observation"}}]}
-    http = _FakeHttp([_Resp(page1), _Resp(page2)])
+# --------------------- per-resource compartment fetch -------------------- #
+def _search_bundle(resource, n=1, next_url=None):
+    b = {"resourceType": "Bundle", "type": "searchset",
+         "entry": [{"resource": {"resourceType": resource}} for _ in range(n)]}
+    if next_url:
+        b["link"] = [{"relation": "next", "url": next_url}]
+    return b
 
-    bundle = EpicFhirClient(http, "tok").fetch_patient_everything(
+
+def test_fetch_compartment_collects_resources_and_paginates():
+    # Order: Patient read, Observation(lab) [paginated], Observation(vitals),
+    # Condition, MedicationRequest.
+    http = _FakeHttp([
+        _Resp({"resourceType": "Patient", "id": "PAT123"}),
+        _Resp(_search_bundle("Observation", n=1, next_url="https://fhir.example/obs-2")),
+        _Resp(_search_bundle("Observation", n=1)),                 # page 2 (lab)
+        _Resp(_search_bundle("Observation", n=0)),                 # vitals: none
+        _Resp(_search_bundle("Condition", n=1)),
+        _Resp(_search_bundle("MedicationRequest", n=2)),
+    ])
+
+    bundle = EpicFhirClient(http, "tok").fetch_patient_compartment(
         "https://fhir.example/R4", "PAT123",
     )
 
-    assert len(bundle["entry"]) == 2
+    types = [e["resource"]["resourceType"] for e in bundle["entry"]]
+    assert types.count("Patient") == 1
+    assert types.count("Observation") == 2          # 1 lab page1 + 1 lab page2
+    assert types.count("Condition") == 1
+    assert types.count("MedicationRequest") == 2
     assert bundle["type"] == "collection"
-    assert http.calls[0].endswith("/Patient/PAT123/$everything")
-    assert http.calls[1] == "https://fhir.example/next-page"
+    assert http.calls[0].endswith("/Patient/PAT123")
+    assert "Observation?" in http.calls[1] and "category=laboratory" in http.calls[1]
+    assert http.calls[2] == "https://fhir.example/obs-2"          # pagination followed
 
 
 def test_fetch_requires_patient_id():
     with pytest.raises(EpicFhirError):
-        EpicFhirClient(_FakeHttp([]), "tok").fetch_patient_everything("https://fhir", "")
+        EpicFhirClient(_FakeHttp([]), "tok").fetch_patient_compartment("https://fhir", "")
 
 
-def test_fetch_raises_on_http_error():
-    http = _FakeHttp([_Resp({"resourceType": "OperationOutcome"}, status=401)])
-    with pytest.raises(EpicFhirError):
-        EpicFhirClient(http, "tok").fetch_patient_everything("https://fhir", "PAT")
+def test_fetch_tolerates_per_resource_errors():
+    # Patient ok, Observation(lab) 404 → skipped, rest ok. Sync still returns data.
+    http = _FakeHttp([
+        _Resp({"resourceType": "Patient", "id": "PAT"}),
+        _Resp({"resourceType": "OperationOutcome"}, status=404),   # lab search fails
+        _Resp(_search_bundle("Observation", n=1)),                 # vitals ok
+        _Resp(_search_bundle("Condition", n=1)),
+        _Resp(_search_bundle("MedicationRequest", n=0)),
+    ])
+    bundle = EpicFhirClient(http, "tok").fetch_patient_compartment("https://fhir/R4", "PAT")
+    types = sorted(e["resource"]["resourceType"] for e in bundle["entry"])
+    assert types == ["Condition", "Observation", "Patient"]
 
 
 # ----------------------------- token refresh ----------------------------- #

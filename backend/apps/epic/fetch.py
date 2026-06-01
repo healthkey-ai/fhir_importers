@@ -63,6 +63,6 @@ def build_bundle_for_connection(connection) -> dict:
     access_token = _ensure_fresh_token(connection)
     org, _, _ = get_auth_service().smart_config_for_org(connection.org_alias)
     with httpx.Client(timeout=settings.EPIC_HTTP_TIMEOUT_SECONDS) as http:
-        return EpicFhirClient(http, access_token).fetch_patient_everything(
+        return EpicFhirClient(http, access_token).fetch_patient_compartment(
             org.endpoint_url, connection.epic_patient_id,
         )
