@@ -39,9 +39,15 @@
 .mychart-root button {
   margin-top: 1.5rem;
   cursor: pointer;
-  background: #3182ce;
-  color: white;
-  border-color: #3182ce;
+  /* Inherit the host app's primary color (shadcn HSL vars); fall back to a
+     blue for the standalone dev harness where the host vars aren't defined. */
+  background: hsl(var(--primary, 210 62% 50%));
+  color: hsl(var(--primary-foreground, 0 0% 100%));
+  border-color: hsl(var(--primary, 210 62% 50%));
+}
+
+.mychart-root button:hover:not(:disabled) {
+  filter: brightness(0.92);
 }
 
 .mychart-root button:disabled {

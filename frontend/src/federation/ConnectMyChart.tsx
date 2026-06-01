@@ -60,7 +60,7 @@ function ConnectMyChartInner({ onError }: Pick<ConnectMyChartProps, "onError">) 
             placeholder="Start typing a hospital name…"
           />
           <button type="button" onClick={connect} disabled={!selected || connecting}>
-            {connecting ? "Redirecting…" : "Connect MyChart"}
+            {connecting ? "Redirecting…" : selected ? `Connect ${selected.title}` : "Connect"}
           </button>
         </>
       )}
