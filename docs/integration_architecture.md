@@ -302,13 +302,18 @@ needs follow-up. **Accepted** = a deliberate as-built design, no action required
 | 4 | **Connector serves its own MF remote** (two-stage Dockerfile + WhiteNoise at `/static`) | A production host must load `remoteEntry.js` cross-origin from the connector. |
 | 5 | **Chunked ingest (≤400 rows/POST)** + per-person **record totals** returned | Keeps each `/api/fhir/sync/` call under ctomop's per-request entry limit; totals drive the host UI. |
 
+### Resolved during integration
+
+| Item | Resolution |
+|---|---|
+| **OMOP PK sequence collision** — legacy `MAX(id)+1` writers stranded Postgres sequences, so the sequence-based sync hit `duplicate key` 500s | Fixed in ctomop: `next_pk`/`next_pk_batch` self-heal the sequence to `≥ MAX(id)` before allocating. **Merged (PR #108) and live on ctomop-staging** (serving revision runs `pk.py` with `_reseed_to_max`). No more manual reseeds needed. |
+
 ### Action needed
 
 | # | Item | What needs doing | Owner / tracking |
 |---|---|---|---|
-| 6 | **OMOP PK sequence self-heal not yet deployed** | The ctomop fix (legacy `MAX(id)+1` writers strand Postgres sequences → `duplicate key` 500s on sync) lives in **ctomop PR #108** but **isn't on staging yet**. **Merge #108 + redeploy ctomop-staging.** Until then the staging sync can recur the 500 and needs a manual sequence reseed. | ctomop PR #108 |
-| 7 | **Legacy `MAX(id)+1` writers remain** | #108 makes the *sync* path self-healing, but the legacy writers (`patient_portal/api/views.py`, `lot_inference_service`, `omop_write_service`) still assign explicit PKs without advancing the sequence — a latent footgun. Durable cure: migrate them to `next_pk`. | ctomop follow-up |
-| 8 | **Cloud sync runs inline (`TASK_BACKEND=eager`)**, not Celery | Acceptable now (sync ~11 s), but there's no async/retry and it holds the request open. If bundles grow or Epic is slow, add an async backend (Cloud Tasks worker, à la hk-labs) + a VPC connector. | Revisit at scale |
-| 9 | **Re-sync is not self-reconciling** | The connector doesn't remove its prior `EHR_SYNC` rows before a re-sync; it relies on ctomop's content-dedup, which doesn't cover everything (clean re-tests currently clear rows manually). Implement reconcile-on-resync (or confirm ctomop dedup is sufficient). | Phase 5 |
-| 10 | **Oncology enrichment deferred** | ECOG, stage, ER/PR/HER2 biomarkers, therapy-line episodes aren't mapped, so those `PatientInfo` fields stay empty for Epic-sourced patients. | **issue #10** |
-| 11 | **PHI security review + hardening** | Full PHI/security review, retry/backoff, error surfacing — the Phase 5 tail. | Phase 5 |
+| 6 | **Legacy `MAX(id)+1` writers remain** | #108 makes the *sync* path self-healing, but the legacy writers (`patient_portal/api/views.py`, `lot_inference_service`, `omop_write_service`) still assign explicit PKs without advancing the sequence — a latent footgun. Durable cure: migrate them to `next_pk`. | ctomop follow-up |
+| 7 | **Cloud sync runs inline (`TASK_BACKEND=eager`)**, not Celery | Acceptable now (sync ~11 s), but there's no async/retry and it holds the request open. If bundles grow or Epic is slow, add an async backend (Cloud Tasks HTTP dispatch, à la hk-labs — no VPC/Redis needed). | Revisit at scale |
+| 8 | **Re-sync is not self-reconciling** | The connector doesn't remove its prior `EHR_SYNC` rows before a re-sync; it relies on ctomop's content-dedup, which doesn't cover everything (clean re-tests currently clear rows manually). Implement reconcile-on-resync (or confirm ctomop dedup is sufficient). | Phase 5 |
+| 9 | **Oncology enrichment deferred** | ECOG, stage, ER/PR/HER2 biomarkers, therapy-line episodes aren't mapped, so those `PatientInfo` fields stay empty for Epic-sourced patients. | **issue #10** |
+| 10 | **PHI security review + hardening** | Full PHI/security review, retry/backoff, error surfacing — the Phase 5 tail. | Phase 5 |
