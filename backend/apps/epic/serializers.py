@@ -61,9 +61,17 @@ class ConnectionSerializer(serializers.Serializer):
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
     last_sync = serializers.SerializerMethodField()
+    total_records = serializers.SerializerMethodField()
 
     def get_last_sync(self, obj):
         job = obj.sync_jobs.order_by("-created_at").first()
         if job is None:
             return None
         return SyncJobSerializer(job).data
+
+    def get_total_records(self, obj):
+        # Records imported overall (created_count is new-per-sync, so re-syncs
+        # add 0 — the sum is the cumulative imported total).
+        from django.db.models import Sum
+        return obj.sync_jobs.filter(status="succeeded").aggregate(
+            t=Sum("created_count"))["t"] or 0
