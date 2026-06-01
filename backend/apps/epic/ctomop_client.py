@@ -13,7 +13,12 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-TIMEOUT = httpx.Timeout(connect=5.0, read=30.0, write=30.0, pool=5.0)
+def _timeout() -> httpx.Timeout:
+    # ctomop ingests the whole patient compartment synchronously in the request
+    # (per-row concept lookups + PatientInfo refresh), so a first full-patient
+    # sync can take a while. Read timeout is generous + configurable.
+    read = getattr(settings, "CTOMOP_HTTP_TIMEOUT_SECONDS", 180.0)
+    return httpx.Timeout(connect=5.0, read=read, write=30.0, pool=5.0)
 
 
 class CtomopSyncError(Exception):
@@ -68,7 +73,7 @@ def sync_fhir_bundle(
         payload["person_id"] = person_id
 
     try:
-        with httpx.Client(timeout=TIMEOUT) as client:
+        with httpx.Client(timeout=_timeout()) as client:
             resp = client.post(url, json=payload, headers=_headers(bearer_token))
     except httpx.HTTPError as exc:
         raise CtomopSyncError(f"ctomop sync request failed: {exc}") from exc
