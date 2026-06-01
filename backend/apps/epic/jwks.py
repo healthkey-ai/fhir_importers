@@ -11,7 +11,6 @@ never the private keys themselves.
 import json
 import logging
 from functools import lru_cache
-from pathlib import Path
 
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from django.conf import settings
@@ -20,11 +19,13 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .epic_config import resolve_private_key_pem
+
 logger = logging.getLogger(__name__)
 
 
-def _public_jwk(private_key_path: str, kid: str) -> dict:
-    key = load_pem_private_key(Path(private_key_path).read_bytes(), password=None)
+def _public_jwk(private_key_pem: str, kid: str) -> dict:
+    key = load_pem_private_key(private_key_pem.encode(), password=None)
     jwk = json.loads(RSAAlgorithm.to_jwk(key.public_key()))
     jwk.update({"kid": kid, "use": "sig", "alg": "RS256"})
     return jwk
@@ -35,23 +36,32 @@ def build_jwks() -> dict:
     """Build the JWKS from the configured Epic signing keys (staging + prod).
 
     Cached for the process lifetime — keys don't change at runtime; restart (or
-    redeploy) after rotating a key. Missing/unreadable key files are skipped so
-    a partially-configured environment still serves what it can.
+    redeploy) after rotating a key. Keys are taken from the inline PEM env vars
+    when set, else the file paths. Missing/unreadable keys are skipped so a
+    partially-configured environment still serves what it can; identical keys
+    (same PEM + kid) are de-duplicated.
     """
     candidates = [
-        (settings.EPIC_STAGING_PRIVATE_KEY_PATH, settings.EPIC_STAGING_JWKS_KID),
-        (settings.EPIC_PROD_PRIVATE_KEY_PATH, settings.EPIC_PROD_JWKS_KID),
+        (settings.EPIC_STAGING_PRIVATE_KEY, settings.EPIC_STAGING_PRIVATE_KEY_PATH, settings.EPIC_STAGING_JWKS_KID),
+        (settings.EPIC_PROD_PRIVATE_KEY, settings.EPIC_PROD_PRIVATE_KEY_PATH, settings.EPIC_PROD_JWKS_KID),
     ]
     keys = []
     seen = set()
-    for path, kid in candidates:
-        if not path or not kid or (path, kid) in seen:
+    for inline, path, kid in candidates:
+        if not kid:
             continue
-        seen.add((path, kid))
         try:
-            keys.append(_public_jwk(path, kid))
-        except (OSError, ValueError) as exc:
-            logger.warning("JWKS: skipping key %s (kid=%s): %s", path, kid, exc)
+            pem = resolve_private_key_pem(inline, path)
+        except OSError as exc:
+            logger.warning("JWKS: skipping kid=%s (%s)", kid, exc)
+            continue
+        if not pem or (pem, kid) in seen:
+            continue
+        seen.add((pem, kid))
+        try:
+            keys.append(_public_jwk(pem, kid))
+        except ValueError as exc:
+            logger.warning("JWKS: skipping kid=%s (%s)", kid, exc)
     return {"keys": keys}
 
 

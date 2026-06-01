@@ -96,7 +96,7 @@ class EpicAuthService:
         assertion = build_client_assertion(
             client_id=epic.client_id,
             token_endpoint=pending.token_endpoint,
-            private_key_pem_path=epic.private_key_path,
+            private_key_pem=epic.private_key_pem,
             kid=epic.jwks_kid,
         )
         tokens = self._client.exchange_authorization_code(

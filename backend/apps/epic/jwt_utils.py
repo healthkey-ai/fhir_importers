@@ -1,6 +1,5 @@
 import time
 import uuid
-from pathlib import Path
 
 import jwt
 
@@ -8,7 +7,7 @@ import jwt
 def build_client_assertion(
     client_id: str,
     token_endpoint: str,
-    private_key_pem_path: str,
+    private_key_pem: str,
     kid: str,
 ) -> str:
     # aud MUST be the exact token endpoint URL.
@@ -24,5 +23,4 @@ def build_client_assertion(
         "exp": now + 240,
     }
     headers = {"alg": "RS256", "kid": kid}
-    key = Path(private_key_pem_path).read_text()
-    return jwt.encode(payload, key, algorithm="RS256", headers=headers)
+    return jwt.encode(payload, private_key_pem, algorithm="RS256", headers=headers)

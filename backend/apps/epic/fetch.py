@@ -34,7 +34,7 @@ def _ensure_fresh_token(connection) -> str:
     assertion = build_client_assertion(
         client_id=epic.client_id,
         token_endpoint=smart.token_endpoint,
-        private_key_pem_path=epic.private_key_path,
+        private_key_pem=epic.private_key_pem,
         kid=epic.jwks_kid,
     )
     with httpx.Client(timeout=settings.EPIC_HTTP_TIMEOUT_SECONDS) as http:

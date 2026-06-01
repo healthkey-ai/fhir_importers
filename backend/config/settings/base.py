@@ -212,12 +212,16 @@ EPIC_STAGING_ORG_ALIAS = env("EPIC_STAGING_ORG_ALIAS", default="my_chart_central
 
 EPIC_STAGING_CLIENT_ID = env("EPIC_STAGING_CLIENT_ID", default="")
 EPIC_STAGING_REDIRECT_URI = env("EPIC_STAGING_REDIRECT_URI", default="")
+# Signing key: inline PEM (Secret Manager / env) takes precedence over the file
+# path. Cloud Run injects EPIC_STAGING_PRIVATE_KEY; local dev uses the *_PATH.
+EPIC_STAGING_PRIVATE_KEY = env("EPIC_STAGING_PRIVATE_KEY", default="")
 EPIC_STAGING_PRIVATE_KEY_PATH = env("EPIC_STAGING_PRIVATE_KEY_PATH", default="")
 EPIC_STAGING_JWKS_KID = env("EPIC_STAGING_JWKS_KID", default="")
 EPIC_STAGING_SCOPES = env("EPIC_STAGING_SCOPES", default="openid profile fhirUser")
 
 EPIC_PROD_CLIENT_ID = env("EPIC_PROD_CLIENT_ID", default="")
 EPIC_PROD_REDIRECT_URI = env("EPIC_PROD_REDIRECT_URI", default="")
+EPIC_PROD_PRIVATE_KEY = env("EPIC_PROD_PRIVATE_KEY", default="")
 EPIC_PROD_PRIVATE_KEY_PATH = env("EPIC_PROD_PRIVATE_KEY_PATH", default="")
 EPIC_PROD_JWKS_KID = env("EPIC_PROD_JWKS_KID", default="")
 EPIC_PROD_SCOPES = env("EPIC_PROD_SCOPES", default="openid offline_access patient/*.read")

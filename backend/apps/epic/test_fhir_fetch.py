@@ -119,7 +119,7 @@ def test_ensure_fresh_token_refreshes_when_expired(user):
     conn.save()
 
     org = SimpleNamespace(endpoint_url="https://fhir.example/R4")
-    epic = SimpleNamespace(client_id="cid", private_key_path="/x.key", jwks_kid="kid")
+    epic = SimpleNamespace(client_id="cid", private_key_pem="PEM", jwks_kid="kid")
     smart = SimpleNamespace(token_endpoint="https://token.example")
     new_tokens = EpicTokens(access_token="NEW", refresh_token="RT2", id_token=None,
                             expires_in=3600, scope="patient/*.read", patient=None)
