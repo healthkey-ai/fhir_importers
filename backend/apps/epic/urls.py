@@ -1,5 +1,6 @@
 from django.urls import path
 
+from .jwks import JwksView
 from .views import (
     AuthFinishView,
     AuthStartView,
@@ -10,6 +11,7 @@ from .views import (
 )
 
 urlpatterns = [
+    path(".well-known/jwks.json", JwksView.as_view(), name="epic-jwks"),
     path("organizations", OrganizationsView.as_view(), name="epic-organizations"),
     path("auth/start", AuthStartView.as_view(), name="epic-auth-start"),
     path("auth/finish", AuthFinishView.as_view(), name="epic-auth-finish"),
