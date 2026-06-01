@@ -51,6 +51,7 @@ def test_run_sync_posts_bundle_and_records_result(user):
     job = SyncJob.objects.create(connection=conn)
     fake = ctomop_client.FhirSyncResult(
         person_id=42, measurement_ids=[1], condition_ids=[2], drug_exposure_ids=[],
+        demographics_updated=True,
     )
     bundle = {"resourceType": "Bundle", "entry": [
         {"resource": {"resourceType": "Patient"}},
@@ -65,6 +66,7 @@ def test_run_sync_posts_bundle_and_records_result(user):
     assert job.person_id == 42
     assert job.created_count == 2
     assert job.resources_fetched == 2
+    assert job.counts == {"demographics": 1, "measurements": 1, "conditions": 1, "medications": 0}
     assert job.finished_at is not None
     # Identity is forwarded as actor_iss/actor_sub (connector stores no person_id).
     kwargs = m.call_args.kwargs
@@ -112,6 +114,7 @@ def test_run_sync_posts_in_bounded_chunks(user):
     assert m.call_count == 3                 # 400 + 400 + 100
     assert job.resources_fetched == 900
     assert job.created_count == 3            # 1 created per chunk × 3 chunks
+    assert job.counts == {"demographics": 0, "measurements": 3, "conditions": 0, "medications": 0}
     assert job.person_id == 7
     for call in m.call_args_list:            # every chunk stays under ctomop's limit
         assert len(call.kwargs["bundle"]["entry"]) <= tasks.CHUNK_SIZE

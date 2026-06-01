@@ -38,6 +38,20 @@ class FinishResponseSerializer(serializers.Serializer):
     )
 
 
+class SyncJobSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    connection_id = serializers.IntegerField()
+    status = serializers.CharField()
+    resources_fetched = serializers.IntegerField()
+    created_count = serializers.IntegerField()
+    counts = serializers.JSONField()
+    person_id = serializers.IntegerField(allow_null=True)
+    error = serializers.CharField(allow_blank=True)
+    created_at = serializers.DateTimeField()
+    started_at = serializers.DateTimeField(allow_null=True)
+    finished_at = serializers.DateTimeField(allow_null=True)
+
+
 class ConnectionSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     org_alias = serializers.CharField()
@@ -46,16 +60,10 @@ class ConnectionSerializer(serializers.Serializer):
     token_expires_at = serializers.DateTimeField(allow_null=True)
     created_at = serializers.DateTimeField()
     updated_at = serializers.DateTimeField()
+    last_sync = serializers.SerializerMethodField()
 
-
-class SyncJobSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    connection_id = serializers.IntegerField()
-    status = serializers.CharField()
-    resources_fetched = serializers.IntegerField()
-    created_count = serializers.IntegerField()
-    person_id = serializers.IntegerField(allow_null=True)
-    error = serializers.CharField(allow_blank=True)
-    created_at = serializers.DateTimeField()
-    started_at = serializers.DateTimeField(allow_null=True)
-    finished_at = serializers.DateTimeField(allow_null=True)
+    def get_last_sync(self, obj):
+        job = obj.sync_jobs.order_by("-created_at").first()
+        if job is None:
+            return None
+        return SyncJobSerializer(job).data

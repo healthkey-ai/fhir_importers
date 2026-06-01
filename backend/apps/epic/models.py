@@ -81,6 +81,9 @@ class SyncJob(models.Model):
     status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=QUEUED)
     resources_fetched = models.IntegerField(default=0)
     created_count = models.IntegerField(default=0)
+    # Per-category breakdown, updated live as chunks complete:
+    # {"demographics": 0|1, "measurements": N, "conditions": N, "medications": N}
+    counts = models.JSONField(default=dict, blank=True)
     # person_id is returned by ctomop for reconciliation; the connector does not
     # treat it as the identity key.
     person_id = models.BigIntegerField(null=True, blank=True)

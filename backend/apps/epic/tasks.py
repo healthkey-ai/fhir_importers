@@ -34,11 +34,13 @@ def run_sync(job_id: int) -> None:
 
     conn = job.connection
     identity = conn.identity
+    counts = {"demographics": 0, "measurements": 0, "conditions": 0, "medications": 0}
     try:
         bundle = build_bundle_for_connection(conn)
         entries = bundle.get("entry", []) or []
+        job.resources_fetched = len(entries)
+        job.save(update_fields=["resources_fetched"])
 
-        created = 0
         person_id = None
         for chunk in _chunks(entries, CHUNK_SIZE):
             result = ctomop_client.sync_fhir_bundle(
@@ -46,13 +48,19 @@ def run_sync(job_id: int) -> None:
                 actor_iss=identity.issuer,
                 actor_sub=identity.sub,
             )
-            created += result.created_count
+            counts["measurements"] += len(result.measurement_ids)
+            counts["conditions"] += len(result.condition_ids)
+            counts["medications"] += len(result.drug_exposure_ids)
+            if result.demographics_updated:
+                counts["demographics"] = 1
             person_id = result.person_id or person_id
+            # Persist progress after each chunk so a polling UI sees it grow.
+            job.counts = counts
+            job.created_count = counts["measurements"] + counts["conditions"] + counts["medications"]
+            job.person_id = person_id
+            job.save(update_fields=["counts", "created_count", "person_id"])
 
         job.status = SyncJob.SUCCEEDED
-        job.resources_fetched = len(entries)
-        job.created_count = created
-        job.person_id = person_id
     except Exception as exc:  # noqa: BLE001 — record any failure on the job
         logger.exception("SyncJob %s failed", job_id)
         job.status = SyncJob.FAILED

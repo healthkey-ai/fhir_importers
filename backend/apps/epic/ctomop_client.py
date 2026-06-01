@@ -32,6 +32,7 @@ class FhirSyncResult:
     measurement_ids: list
     condition_ids: list
     drug_exposure_ids: list
+    demographics_updated: bool = False
 
     @property
     def created_count(self) -> int:
@@ -90,4 +91,5 @@ def sync_fhir_bundle(
         measurement_ids=data.get("measurement_ids", []),
         condition_ids=data.get("condition_ids", []),
         drug_exposure_ids=data.get("drug_exposure_ids", []),
+        demographics_updated=bool(data.get("demographics_updated", False)),
     )
