@@ -74,7 +74,7 @@ function ConnectMyChartInner({
             </p>
           )}
           <button type="button" onClick={connect} disabled={!selected || connecting}>
-            {connecting ? "Redirecting…" : selected ? `Connect ${selected.title}` : "Connect"}
+            {connecting ? "Redirecting…" : selected ? `Connect to ${selected.title}` : "Connect"}
           </button>
         </>
       )}
