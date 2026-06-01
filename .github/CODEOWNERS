@@ -1,0 +1,5 @@
+# CODEOWNERS — repository-wide ownership.
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Catch-all: every path in the repo is owned by @shpilevoy.
+* @shpilevoy
