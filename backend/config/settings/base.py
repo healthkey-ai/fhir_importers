@@ -249,9 +249,24 @@ def _init_firebase_admin():
         try:
             cred = fb_credentials.ApplicationDefault()
         except Exception:
-            # No ADC available (e.g. standalone/local with no Firebase). The
-            # Firebase provider simply won't verify tokens until creds exist.
+            cred = None
+
+    if cred is None:
+        if not project_id:
+            # Nothing to verify against — leave Firebase uninitialised.
             return
+
+        # Verify-only mode: no service-account key and no ADC, but a project id
+        # is configured. Initialise with a no-op credential so the connector can
+        # still verify host-issued ID tokens against Google's public certs — no
+        # secret needed to *verify* (only to mint/revoke). Revocation checks hit
+        # the Firebase backend and need real creds, so they must be disabled in
+        # this mode (FIREBASE_SKIP_REVOCATION_CHECK — set in dev settings).
+        class _VerifyOnlyCredential(fb_credentials.Base):
+            def get_credential(self):
+                return None
+
+        cred = _VerifyOnlyCredential()
 
     try:
         firebase_admin.initialize_app(cred, options)
