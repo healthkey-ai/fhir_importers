@@ -17,7 +17,7 @@ env:
 
 jobs:
   test:
-    name: Typecheck + smoke import
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -67,7 +67,7 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev --quiet
 
-      - name: Build & push image (tags: $GITHUB_SHA + latest)
+      - name: Build and push image
         env:
           GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
         run: |
