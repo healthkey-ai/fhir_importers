@@ -32,6 +32,8 @@ export interface MyChartBaseProps {
 export interface ConnectMyChartProps extends MyChartBaseProps {
   /** Called if loading organizations or starting the auth flow fails. */
   onError?: (error: Error) => void;
+  /** Org aliases to hide from the picker (e.g. already-connected hospitals). */
+  excludeAliases?: string[];
 }
 
 export interface MyChartCallbackProps extends MyChartBaseProps {
