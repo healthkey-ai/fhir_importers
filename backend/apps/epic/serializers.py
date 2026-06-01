@@ -25,12 +25,37 @@ class FinishRequestSerializer(serializers.Serializer):
 
 
 class FinishResponseSerializer(serializers.Serializer):
-    access_token = serializers.CharField()
-    refresh_token = serializers.CharField(allow_null=True, required=False)
-    id_token = serializers.CharField(allow_null=True, required=False)
+    """Phase 2: tokens are persisted server-side (encrypted), never returned to
+    the browser. The caller gets the connection + the kicked-off sync job."""
+    connection_id = serializers.IntegerField()
+    sync_job_id = serializers.IntegerField()
+    organization_alias = serializers.CharField()
     expires_in = serializers.IntegerField()
     scope = serializers.CharField(allow_null=True, required=False)
     patient = serializers.CharField(
         allow_null=True, required=False,
         help_text="SMART-on-FHIR patient launch context, if returned",
     )
+
+
+class ConnectionSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    org_alias = serializers.CharField()
+    epic_patient_id = serializers.CharField(allow_blank=True)
+    scope = serializers.CharField(allow_blank=True)
+    token_expires_at = serializers.DateTimeField(allow_null=True)
+    created_at = serializers.DateTimeField()
+    updated_at = serializers.DateTimeField()
+
+
+class SyncJobSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    connection_id = serializers.IntegerField()
+    status = serializers.CharField()
+    resources_fetched = serializers.IntegerField()
+    created_count = serializers.IntegerField()
+    person_id = serializers.IntegerField(allow_null=True)
+    error = serializers.CharField(allow_blank=True)
+    created_at = serializers.DateTimeField()
+    started_at = serializers.DateTimeField(allow_null=True)
+    finished_at = serializers.DateTimeField(allow_null=True)

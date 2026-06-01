@@ -191,6 +191,11 @@ CTOMOP_SYNC_URL = env(
 )
 CTOMOP_SERVICE_TOKEN = env("CTOMOP_SERVICE_TOKEN", default="")
 
+# Fernet key (urlsafe-base64, 32 bytes) for encrypting Epic tokens at rest.
+# Empty → dev fallback derived from SECRET_KEY (see apps.epic.crypto). Set a
+# real key in production.
+TOKEN_ENCRYPTION_KEY = env("TOKEN_ENCRYPTION_KEY", default="")
+
 # ── Epic / MyChart SMART-on-FHIR connector config ─────────────────────────
 # Staging = Epic non-production / sandbox app, used ONLY for the sandbox org
 # (EPIC_STAGING_ORG_ALIAS). Every other org uses the production credentials.

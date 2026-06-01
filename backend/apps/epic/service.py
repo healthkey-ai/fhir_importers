@@ -86,7 +86,8 @@ class EpicAuthService:
         _logger.info("Built authorization URL for organization=%s state=%s", org.alias, state)
         return StartAuthResult(authorization_url=url, state=state)
 
-    def finish(self, code: str, state: str) -> EpicTokens:
+    def finish(self, code: str, state: str) -> tuple[EpicTokens, str]:
+        """Exchange the code for tokens. Returns (tokens, organization_alias)."""
         pending = self._state_store.pop(state)
         if pending is None:
             raise InvalidStateError("Unknown or expired state")
@@ -114,7 +115,7 @@ class EpicAuthService:
                 # Validation is diagnostic — Epic already enforced the flow. Log and continue.
                 _logger.exception("id_token validation failed for organization=%s", pending.organization_alias)
 
-        return tokens
+        return tokens, pending.organization_alias
 
     def _validate_id_token(self, organization_alias: str, id_token: str) -> None:
         org = self._organizations.get(organization_alias)

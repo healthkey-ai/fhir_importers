@@ -7,9 +7,11 @@ export interface Organization {
 }
 
 export interface FinishResult {
-  access_token: string;
-  refresh_token: string | null;
-  id_token: string | null;
+  /** Persisted connection id (tokens are stored server-side, never returned). */
+  connection_id: number;
+  /** Sync job kicked off for this connection — poll GET /epic/sync/{id}. */
+  sync_job_id: number;
+  organization_alias: string;
   expires_in: number;
   scope: string | null;
   patient: string | null;
