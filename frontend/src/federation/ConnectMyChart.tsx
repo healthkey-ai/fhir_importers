@@ -51,7 +51,6 @@ function ConnectMyChartInner({ onError }: Pick<ConnectMyChartProps, "onError">) 
 
       {!loading && (
         <>
-          <label htmlFor="mychart-org">Hospital / organization</label>
           <OrganizationCombobox
             organizations={orgs}
             value={selected}
