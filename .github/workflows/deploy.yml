@@ -10,6 +10,11 @@ concurrency:
   group: deploy-prod
   cancel-in-progress: false
 
+env:
+  GCP_REGION: us-central1
+  AR_REPO: healthkey-fhir-backend
+  IMAGE_NAME: app
+
 jobs:
   test:
     name: Typecheck + smoke import
@@ -47,14 +52,43 @@ jobs:
           # on a clean runner with no real config.
           python -c "from app.main import app; print('routes:', sorted({r.path for r in app.routes}))"
 
-  deploy:
-    name: Deploy to ${{ secrets.SSH_HOST }}
+  docker_build:
+    name: Build & push image to Artifact Registry
     needs: [test]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v6
 
+      - name: Auth to GCP
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev --quiet
+
+      - name: Build & push image (tags: $GITHUB_SHA + latest)
+        env:
+          GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
+        run: |
+          IMAGE_URI="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT}/${AR_REPO}/${IMAGE_NAME}"
+          echo "Building ${IMAGE_URI}:${GITHUB_SHA}"
+          docker build --platform linux/amd64 --provenance=false \
+            -t "${IMAGE_URI}:${GITHUB_SHA}" \
+            -t "${IMAGE_URI}:latest" \
+            .
+          docker push "${IMAGE_URI}:${GITHUB_SHA}"
+          docker push "${IMAGE_URI}:latest"
+
+  deploy:
+    name: Pull + restart on ${{ secrets.SSH_HOST }}
+    needs: [docker_build]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
@@ -63,38 +97,25 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # Mirrors `make deploy`: rsync the working tree (sans dev cruft) and
-      # then docker-compose up --build on the host. The multi-stage Dockerfile
-      # builds both the federation remote (Node stage) and the FastAPI runtime
-      # (Python stage), so no separate frontend artifact needs shipping.
-      - name: rsync source to host
+      # The docker-compose.yml lives on the host (managed out-of-band, in
+      # DEPLOY_PATH). It should reference the AR image like:
+      #   image: ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT}/healthkey-fhir-backend/app:${IMAGE_TAG:-latest}
+      # so the IMAGE_TAG exported below pins the rev being rolled out.
+      - name: Pull image + restart on host
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-        run: |
-          rsync -az --delete \
-            --exclude='.git/' \
-            --exclude='venv/' \
-            --exclude='frontend/node_modules/' \
-            --exclude='frontend/dist/' \
-            --exclude='__pycache__/' \
-            --exclude='*.pyc' \
-            --exclude='.idea/' \
-            --exclude='*.tsbuildinfo' \
-            --exclude='examples/' \
-            -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa" \
-            ./ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"
-
-      - name: Rebuild + restart on host
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          GCP_KEY_FILE: ${{ secrets.GCP_KEY_FILE }}
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa "$SSH_USER@$SSH_HOST" <<EOF
             set -e
             cd $DEPLOY_PATH
-            docker compose up -d --build
+            gcloud auth activate-service-account --key-file=$GCP_KEY_FILE
+            gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev --quiet
+            export IMAGE_TAG=${GITHUB_SHA}
+            echo "Rolling out IMAGE_TAG=\$IMAGE_TAG"
+            docker compose pull
+            docker compose up -d --remove-orphans
             docker compose ps
           EOF
