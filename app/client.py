@@ -1,3 +1,4 @@
+import abc
 import logging
 from dataclasses import dataclass
 
@@ -25,7 +26,27 @@ class EpicTokens:
     patient: str | None
 
 
-class EpicClient:
+class BaseEpicClient(abc.ABC):
+    """Outbound HTTP to an Epic FHIR server: SMART discovery + token exchange."""
+
+    @abc.abstractmethod
+    async def get_smart_configuration(
+        self, base_url: str, client_id: str
+    ) -> SmartConfiguration: ...
+
+    @abc.abstractmethod
+    async def exchange_authorization_code(
+        self,
+        token_endpoint: str,
+        code: str,
+        redirect_uri: str,
+        client_id: str,
+        code_verifier: str,
+        client_assertion: str,
+    ) -> EpicTokens: ...
+
+
+class EpicClient(BaseEpicClient):
     def __init__(self, http: httpx.AsyncClient):
         self._http = http
 

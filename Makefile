@@ -4,7 +4,7 @@ NODE_MODULES := $(FRONTEND_DIR)/node_modules
 DEPLOY_HOST := cancerbot.app
 DEPLOY_PATH := ~/fhir-importers
 
-.PHONY: ui ui-build deploy
+.PHONY: ui ui-build pytest deploy
 
 $(NODE_MODULES): $(FRONTEND_DIR)/package.json
 	cd $(FRONTEND_DIR) && npm install
@@ -15,6 +15,10 @@ ui: $(NODE_MODULES)
 
 ui-build: $(NODE_MODULES)
 	cd $(FRONTEND_DIR) && npm run build
+
+pytest:
+	@pip install -q -r requirements-dev.txt
+	@python -m pytest
 
 deploy:
 	@echo "Deploying to $(DEPLOY_HOST)..."

@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from redis.asyncio import from_url as redis_from_url
 
+from .auth import FirebaseTokenVerifier
 from .client import EpicClient
 from .config import Settings
 from .crypto import TokenCipher
@@ -53,6 +54,7 @@ async def lifespan(app: FastAPI):
     app.state.epic_auth_service = service
     app.state.db_sessionmaker = create_sessionmaker(engine)
     app.state.token_cipher = TokenCipher(settings.token_encryption_key)
+    app.state.token_verifier = FirebaseTokenVerifier()
 
     try:
         yield

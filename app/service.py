@@ -4,17 +4,18 @@ import hashlib
 import logging
 import secrets
 import urllib.parse
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 import jwt
 from jwt import PyJWKClient
 
-from .client import EpicClient, EpicTokens, SmartConfiguration
+from .client import BaseEpicClient, SmartConfiguration
 from .config import Settings
 from .jwt_utils import build_client_assertion
 from .organizations import OrganizationRegistry
-from .state_store import PendingState, RedisStateStore
+from .state_store import BaseStateStore, PendingState
 
 
 _logger = logging.getLogger(__name__)
@@ -41,18 +42,24 @@ class FinishResult:
     expires_at: datetime
 
 
+AssertionBuilder = Callable[..., str]
+
+
 class EpicAuthService:
     def __init__(
         self,
         settings: Settings,
-        client: EpicClient,
-        state_store: RedisStateStore,
+        client: BaseEpicClient,
+        state_store: BaseStateStore,
         organizations: OrganizationRegistry,
+        *,
+        assertion_builder: AssertionBuilder | None = None,
     ):
         self._settings = settings
         self._client = client
         self._state_store = state_store
         self._organizations = organizations
+        self._build_assertion = assertion_builder or build_client_assertion
         self._smart_config_cache: dict[str, SmartConfiguration] = {}
         self._smart_config_lock = asyncio.Lock()
 
@@ -98,7 +105,7 @@ class EpicAuthService:
             raise InvalidStateError("Unknown or expired state")
 
         epic = self._settings.epic_config_for_org(pending.organization_alias)
-        assertion = build_client_assertion(
+        assertion = self._build_assertion(
             client_id=epic.client_id,
             token_endpoint=pending.token_endpoint,
             private_key_pem_path=epic.private_key_path,
@@ -137,7 +144,6 @@ class EpicAuthService:
         if not smart.jwks_uri or not smart.issuer:
             raise ValueError("smart-configuration is missing jwks_uri or issuer")
 
-        # PyJWKClient is synchronous; offload to a thread so we don't block the loop.
         def _decode() -> dict:
             jwk_client = PyJWKClient(smart.jwks_uri)
             signing_key = jwk_client.get_signing_key_from_jwt(id_token).key

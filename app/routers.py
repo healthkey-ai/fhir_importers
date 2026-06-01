@@ -1,9 +1,9 @@
+from collections.abc import AsyncIterator
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from .auth import get_current_user_uid
-from .connections import ConnectionsRepository
-from .db import get_session
+from .connections import BaseConnectionsRepository, ConnectionsRepository
 from .organizations import OrganizationRegistry, UnknownOrganization
 from .schemas import (
     ConnectionOut,
@@ -24,16 +24,20 @@ def get_organizations(request: Request) -> OrganizationRegistry:
     return request.app.state.organizations
 
 
+async def get_connections_repo(request: Request) -> AsyncIterator[BaseConnectionsRepository]:
+    sessionmaker = request.app.state.db_sessionmaker
+    async with sessionmaker() as session:
+        yield ConnectionsRepository(session, request.app.state.token_cipher)
+
+
 router = APIRouter(prefix="/epic", tags=["epic-auth"])
 
 
 @router.get("/connections", response_model=list[ConnectionOut])
 async def list_connections(
-    request: Request,
     uid: str = Depends(get_current_user_uid),
-    session: AsyncSession = Depends(get_session),
+    repo: BaseConnectionsRepository = Depends(get_connections_repo),
 ) -> list[ConnectionOut]:
-    repo = ConnectionsRepository(session, request.app.state.token_cipher)
     items = await repo.list_for_user(uid)
     return [
         ConnectionOut(
@@ -60,11 +64,9 @@ async def list_organizations(
 @router.delete("/connections/{organization_alias}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_connection(
     organization_alias: str,
-    request: Request,
     uid: str = Depends(get_current_user_uid),
-    session: AsyncSession = Depends(get_session),
+    repo: BaseConnectionsRepository = Depends(get_connections_repo),
 ) -> Response:
-    repo = ConnectionsRepository(session, request.app.state.token_cipher)
     deleted = await repo.delete(uid, organization_alias)
     if not deleted:
         raise HTTPException(
@@ -92,9 +94,8 @@ async def start(
 @router.post("/auth/finish", response_model=FinishResponse)
 async def finish(
     body: FinishRequest,
-    request: Request,
     uid: str = Depends(get_current_user_uid),
-    session: AsyncSession = Depends(get_session),
+    repo: BaseConnectionsRepository = Depends(get_connections_repo),
     service: EpicAuthService = Depends(get_epic_auth_service),
 ) -> FinishResponse:
     try:
@@ -102,7 +103,6 @@ async def finish(
     except InvalidStateError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
-    repo = ConnectionsRepository(session, request.app.state.token_cipher)
     conn = await repo.upsert(
         user_uid=uid,
         organization_alias=result.organization_alias,
@@ -118,5 +118,5 @@ async def finish(
         patient=conn.patient,
         scope=conn.scope,
         status="connected",
-        connected_at=conn.created_at,
+        connected_at=conn.connected_at,
     )

@@ -1,10 +1,11 @@
+import abc
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .crypto import TokenCipher
+from .crypto import BaseTokenCipher
 from .models import MyChartConnection
 
 
@@ -17,8 +18,34 @@ class ConnectionMetadata:
     connected_at: datetime
 
 
-class ConnectionsRepository:
-    def __init__(self, session: AsyncSession, cipher: TokenCipher):
+class BaseConnectionsRepository(abc.ABC):
+    """Persistence for a user's MyChart connections; returns metadata only."""
+
+    @abc.abstractmethod
+    async def upsert(
+        self,
+        *,
+        user_uid: str,
+        organization_alias: str,
+        access_token: str,
+        refresh_token: str | None,
+        id_token: str | None,
+        scope: str | None,
+        patient: str | None,
+        expires_at: datetime,
+    ) -> ConnectionMetadata: ...
+
+    @abc.abstractmethod
+    async def delete(self, user_uid: str, organization_alias: str) -> bool: ...
+
+    @abc.abstractmethod
+    async def list_for_user(self, user_uid: str) -> list[ConnectionMetadata]: ...
+
+
+class ConnectionsRepository(BaseConnectionsRepository):
+    """Postgres-backed, Fernet-at-rest implementation via SQLModel."""
+
+    def __init__(self, session: AsyncSession, cipher: BaseTokenCipher):
         self._session = session
         self._cipher = cipher
 
@@ -33,7 +60,7 @@ class ConnectionsRepository:
         scope: str | None,
         patient: str | None,
         expires_at: datetime,
-    ) -> MyChartConnection:
+    ) -> ConnectionMetadata:
         now = datetime.now(timezone.utc)
         existing = (
             await self._session.execute(
@@ -74,7 +101,13 @@ class ConnectionsRepository:
 
         await self._session.commit()
         await self._session.refresh(conn)
-        return conn
+        return ConnectionMetadata(
+            organization_alias=conn.organization_alias,
+            patient=conn.patient,
+            scope=conn.scope,
+            expires_at=conn.expires_at,
+            connected_at=conn.created_at,
+        )
 
     async def delete(self, user_uid: str, organization_alias: str) -> bool:
         existing = (

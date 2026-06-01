@@ -1,3 +1,4 @@
+import abc
 import json
 from dataclasses import asdict, dataclass
 
@@ -11,7 +12,17 @@ class PendingState:
     organization_alias: str
 
 
-class RedisStateStore:
+class BaseStateStore(abc.ABC):
+    """Single-use store for `state` → PKCE metadata; `pop` must be atomic."""
+
+    @abc.abstractmethod
+    async def put(self, state: str, value: PendingState) -> None: ...
+
+    @abc.abstractmethod
+    async def pop(self, state: str) -> PendingState | None: ...
+
+
+class RedisStateStore(BaseStateStore):
     def __init__(self, client: Redis, ttl_seconds: int):
         self._client = client
         self._ttl = ttl_seconds
@@ -28,7 +39,6 @@ class RedisStateStore:
         )
 
     async def pop(self, state: str) -> PendingState | None:
-        # Atomic GET+DELETE so a given state can be consumed exactly once.
         key = self._key(state)
         async with self._client.pipeline(transaction=True) as pipe:
             pipe.get(key)

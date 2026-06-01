@@ -43,14 +43,11 @@ jobs:
           cache: "pip"
           cache-dependency-path: requirements.txt
 
-      - name: Backend — install + import-smoke the FastAPI app
+      - name: Backend — install + run pytest
         run: |
           pip install -U pip wheel
-          pip install -r requirements.txt
-          # Settings fields default to empty; the StaticFiles mount is skipped
-          # when the bundle dir is absent — so importing the app should succeed
-          # on a clean runner with no real config.
-          python -c "from app.main import app; print('routes:', sorted({r.path for r in app.routes}))"
+          pip install -r requirements-dev.txt
+          python -m pytest
 
   docker_build:
     name: Build & push image to Artifact Registry
