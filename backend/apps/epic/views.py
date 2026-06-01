@@ -121,6 +121,18 @@ class ConnectionsView(APIView):
         return Response(ConnectionSerializer(conns, many=True).data)
 
 
+class ConnectionDetailView(APIView):
+    """DELETE /epic/connections/{id} — disconnect (remove the connection + its
+    stored Epic tokens). Imported clinical records in ctomop are left intact."""
+
+    def delete(self, request, connection_id):
+        connection = get_object_or_404(
+            Connection, id=connection_id, identity=request.user,
+        )
+        connection.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class ConnectionSyncView(APIView):
     """POST /epic/connections/{id}/sync — re-run sync for one connection."""
 

@@ -134,6 +134,23 @@ def test_connections_endpoint_is_caller_scoped(api, user):
 
 
 @pytest.mark.django_db
+def test_disconnect_removes_own_connection(api, user):
+    conn = Connection.objects.create(identity=user, org_alias="mine")
+    SyncJob.objects.create(connection=conn)
+
+    resp = api.delete(f"/epic/connections/{conn.id}")
+    assert resp.status_code == 204
+    assert not Connection.objects.filter(id=conn.id).exists()
+    assert not SyncJob.objects.filter(connection_id=conn.id).exists()  # cascades
+
+    # Can't disconnect someone else's connection.
+    other = Identity.objects.create_user(email="o3@example.com", password="pw-supersecret")
+    oconn = Connection.objects.create(identity=other, org_alias="theirs")
+    assert api.delete(f"/epic/connections/{oconn.id}").status_code == 404
+    assert Connection.objects.filter(id=oconn.id).exists()
+
+
+@pytest.mark.django_db
 def test_sync_job_poll_own_only(api, user):
     conn = Connection.objects.create(identity=user, org_alias="mine")
     job = SyncJob.objects.create(connection=conn)
