@@ -1,8 +1,8 @@
+"""Synchronous HTTP layer to Epic (ported from the async FastAPI client)."""
 import logging
 from dataclasses import dataclass
 
 import httpx
-
 
 _logger = logging.getLogger(__name__)
 
@@ -26,13 +26,13 @@ class EpicTokens:
 
 
 class EpicClient:
-    def __init__(self, http: httpx.AsyncClient):
+    def __init__(self, http: httpx.Client):
         self._http = http
 
-    async def get_smart_configuration(self, base_url: str, client_id: str) -> SmartConfiguration:
+    def get_smart_configuration(self, base_url: str, client_id: str) -> SmartConfiguration:
         url = base_url.rstrip("/") + "/.well-known/smart-configuration"
         headers = {"Accept": "application/json", "Epic-Client-ID": client_id}
-        response = await self._http.get(url, headers=headers)
+        response = self._http.get(url, headers=headers)
         response.raise_for_status()
         data = response.json()
         return SmartConfiguration(
@@ -42,7 +42,7 @@ class EpicClient:
             jwks_uri=data.get("jwks_uri"),
         )
 
-    async def exchange_authorization_code(
+    def exchange_authorization_code(
         self,
         token_endpoint: str,
         code: str,
@@ -64,7 +64,7 @@ class EpicClient:
             "Content-Type": "application/x-www-form-urlencoded",
             "Accept": "application/json",
         }
-        response = await self._http.post(token_endpoint, data=body, headers=headers)
+        response = self._http.post(token_endpoint, data=body, headers=headers)
         if response.status_code >= 400:
             _logger.error("Epic token exchange failed: %s %s", response.status_code, response.text)
         response.raise_for_status()

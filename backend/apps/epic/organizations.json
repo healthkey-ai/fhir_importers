@@ -1,0 +1,9 @@
+{
+  "organizations": [
+    {
+      "alias": "my_chart_central",
+      "title": "MyChart Sandbox (Epic)",
+      "endpoint_url": "https://fhir.epic.com/interconnect-fhir-oauth/api/FHIR/R4"
+    }
+  ]
+}

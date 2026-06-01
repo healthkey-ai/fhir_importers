@@ -2,4 +2,7 @@
 *.pyc
 __pycache__/
 venv/
+.venv/
 .idea/
+*.sqlite3
+staticfiles/

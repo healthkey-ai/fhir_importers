@@ -1,22 +1,33 @@
-FROM python:3.12-slim
+# HealthKey FHIR connector — Django service (GCP Cloud Run target).
+# Phase 0: backend only. The Module Federation frontend remote is wired in
+# Phase 1 (mirroring hk-labs' two-stage build at that point).
+FROM python:3.12-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    DJANGO_SETTINGS_MODULE=config.settings.production \
+    PORT=8080
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential libpq-dev curl && \
+    rm -rf /var/lib/apt/lists/*
 
-COPY app/ ./app/
-COPY organizations.json ./organizations.json
+COPY backend/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN useradd --uid 1000 --no-create-home --shell /usr/sbin/nologin app \
-    && chown -R app /app
-USER app
+COPY backend/ ./
 
-EXPOSE 8000
+RUN python manage.py collectstatic --noinput
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+RUN adduser --disabled-password --no-create-home appuser
+USER appuser
+
+EXPOSE 8080
+
+CMD ["gunicorn", "config.wsgi:application", \
+     "--bind", "0.0.0.0:8080", \
+     "--workers", "2", \
+     "--threads", "4", \
+     "--timeout", "120"]
