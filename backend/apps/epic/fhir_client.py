@@ -13,8 +13,8 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-MAX_PAGES = 20
-MAX_ENTRIES = 1000  # ctomop rejects bundles larger than this
+MAX_PAGES = 20        # pagination cap per resource search
+MAX_TOTAL = 5000      # safety ceiling across the whole compartment
 
 # Per-resource searches against the patient compartment. Epic requires a
 # `category` for Observation; Condition/MedicationRequest accept `patient` alone.
@@ -57,7 +57,7 @@ class EpicFhirClient:
         """Run a search and follow pagination, returning resource entries."""
         entries: list = []
         pages = 0
-        while url and pages < MAX_PAGES and len(entries) < MAX_ENTRIES:
+        while url and pages < MAX_PAGES:
             bundle = self._get(url)
             for entry in bundle.get("entry", []) or []:
                 res = (entry or {}).get("resource", {}) or {}
@@ -69,7 +69,12 @@ class EpicFhirClient:
         return entries
 
     def fetch_patient_compartment(self, fhir_base: str, patient_id: str) -> dict:
-        """Assemble the patient's resources into one collection Bundle."""
+        """Assemble the patient's resources into one collection Bundle.
+
+        Each resource type gets its own search budget (MAX_PAGES), so a patient
+        with many observations can't starve conditions/medications. The combined
+        result is chunked before posting to ctomop (see tasks.run_sync).
+        """
         if not patient_id:
             raise EpicFhirError("No Epic patient id on the connection (SMART launch context missing).")
 
@@ -84,19 +89,20 @@ class EpicFhirClient:
         except EpicFhirError as exc:
             logger.warning("Patient read failed (skipped): %s", exc)
 
-        # Per-resource searches.
+        # Per-resource searches — each independent so none starves the others.
         for resource, params in _SEARCHES:
+            if len(entries) >= MAX_TOTAL:
+                logger.warning("Compartment hit MAX_TOTAL=%d; remaining searches skipped", MAX_TOTAL)
+                break
             query = urlencode({"patient": patient_id, **params})
             url = f"{base}/{resource}?{query}"
             try:
                 entries.extend(self._collect_search(url))
             except EpicFhirError as exc:
                 logger.warning("%s search failed (skipped): %s", resource, exc)
-            if len(entries) >= MAX_ENTRIES:
-                break
 
         return {
             "resourceType": "Bundle",
             "type": "collection",
-            "entry": entries[:MAX_ENTRIES],
+            "entry": entries[:MAX_TOTAL],
         }
