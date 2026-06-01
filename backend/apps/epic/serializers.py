@@ -45,6 +45,7 @@ class SyncJobSerializer(serializers.Serializer):
     resources_fetched = serializers.IntegerField()
     created_count = serializers.IntegerField()
     counts = serializers.JSONField()
+    record_totals = serializers.JSONField()
     person_id = serializers.IntegerField(allow_null=True)
     error = serializers.CharField(allow_blank=True)
     created_at = serializers.DateTimeField()
@@ -70,8 +71,9 @@ class ConnectionSerializer(serializers.Serializer):
         return SyncJobSerializer(job).data
 
     def get_total_records(self, obj):
-        # Records imported overall (created_count is new-per-sync, so re-syncs
-        # add 0 — the sum is the cumulative imported total).
-        from django.db.models import Sum
-        return obj.sync_jobs.filter(status="succeeded").aggregate(
-            t=Sum("created_count"))["t"] or 0
+        # Accurate "records on file" = the latest succeeded sync's record_totals
+        # (ctomop's actual current count — not a cumulative that inflates).
+        job = obj.sync_jobs.filter(status="succeeded").order_by("-created_at").first()
+        if not job or not job.record_totals:
+            return 0
+        return sum(int(v or 0) for v in job.record_totals.values())

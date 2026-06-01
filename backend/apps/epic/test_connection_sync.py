@@ -52,6 +52,7 @@ def test_run_sync_posts_bundle_and_records_result(user):
     fake = ctomop_client.FhirSyncResult(
         person_id=42, measurement_ids=[1], condition_ids=[2], drug_exposure_ids=[],
         demographics_updated=True,
+        totals={"measurements": 10, "conditions": 2, "medications": 0},
     )
     bundle = {"resourceType": "Bundle", "entry": [
         {"resource": {"resourceType": "Patient"}},
@@ -67,6 +68,7 @@ def test_run_sync_posts_bundle_and_records_result(user):
     assert job.created_count == 2
     assert job.resources_fetched == 2
     assert job.counts == {"demographics": 1, "measurements": 1, "conditions": 1, "medications": 0}
+    assert job.record_totals == {"measurements": 10, "conditions": 2, "medications": 0}
     assert job.finished_at is not None
     # Identity is forwarded as actor_iss/actor_sub (connector stores no person_id).
     kwargs = m.call_args.kwargs

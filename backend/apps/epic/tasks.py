@@ -42,6 +42,7 @@ def run_sync(job_id: int) -> None:
         job.save(update_fields=["resources_fetched"])
 
         person_id = None
+        totals = {}
         for chunk in _chunks(entries, CHUNK_SIZE):
             result = ctomop_client.sync_fhir_bundle(
                 bundle={"resourceType": "Bundle", "type": "collection", "entry": chunk},
@@ -54,11 +55,14 @@ def run_sync(job_id: int) -> None:
             if result.demographics_updated:
                 counts["demographics"] = 1
             person_id = result.person_id or person_id
+            # Last chunk's totals = the final "records on file" count.
+            totals = result.totals or totals
             # Persist progress after each chunk so a polling UI sees it grow.
             job.counts = counts
             job.created_count = counts["measurements"] + counts["conditions"] + counts["medications"]
+            job.record_totals = totals
             job.person_id = person_id
-            job.save(update_fields=["counts", "created_count", "person_id"])
+            job.save(update_fields=["counts", "created_count", "record_totals", "person_id"])
 
         job.status = SyncJob.SUCCEEDED
     except Exception as exc:  # noqa: BLE001 — record any failure on the job

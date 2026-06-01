@@ -5,7 +5,7 @@ with CTOMOP_SERVICE_TOKEN (an OAuth2 patient/*.write bearer). A forwarded user
 token may be passed instead when available.
 """
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import httpx
@@ -33,6 +33,8 @@ class FhirSyncResult:
     condition_ids: list
     drug_exposure_ids: list
     demographics_updated: bool = False
+    # Person's current record totals after this ingest (records on file).
+    totals: dict = field(default_factory=dict)
 
     @property
     def created_count(self) -> int:
@@ -92,4 +94,5 @@ def sync_fhir_bundle(
         condition_ids=data.get("condition_ids", []),
         drug_exposure_ids=data.get("drug_exposure_ids", []),
         demographics_updated=bool(data.get("demographics_updated", False)),
+        totals=data.get("totals", {}) or {},
     )
