@@ -41,11 +41,6 @@ function ConnectMyChartInner({ onError }: Pick<ConnectMyChartProps, "onError">) 
 
   return (
     <>
-      <h2>Connect MyChart</h2>
-      <p className="mychart-muted">
-        Select your hospital and connect your MyChart account.
-      </p>
-
       {loading && <p>Loading organizations…</p>}
       {error && <div className="mychart-error">{error}</div>}
 
