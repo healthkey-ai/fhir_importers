@@ -1,5 +1,7 @@
 node_modules
 dist
+.__mf__temp
+.vite
 .env
 .env.local
 .env.*.local
