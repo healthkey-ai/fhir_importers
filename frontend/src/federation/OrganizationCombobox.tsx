@@ -38,10 +38,7 @@ export function OrganizationCombobox({
   const filtered = useMemo<Organization[]>(() => {
     const q = query.trim().toLowerCase();
     if (!q) return organizations;
-    return organizations.filter(
-      (o) =>
-        o.title.toLowerCase().includes(q) || o.alias.toLowerCase().includes(q),
-    );
+    return organizations.filter((o) => o.title.toLowerCase().includes(q));
   }, [organizations, query]);
 
   useEffect(() => {
@@ -110,7 +107,6 @@ export function OrganizationCombobox({
               onMouseEnter={() => setHighlight(i)}
             >
               <div className="combobox-option-title">{o.title}</div>
-              <div className="combobox-option-alias">{o.alias}</div>
             </li>
           ))}
         </ul>

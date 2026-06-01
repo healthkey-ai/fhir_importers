@@ -4,7 +4,10 @@ import { useMyChartClient } from "./MyChartContext";
 import { OrganizationCombobox } from "./OrganizationCombobox";
 import type { ConnectMyChartProps, Organization } from "./types";
 
-function ConnectMyChartInner({ onError }: Pick<ConnectMyChartProps, "onError">) {
+function ConnectMyChartInner({
+  onError,
+  excludeAliases = [],
+}: Pick<ConnectMyChartProps, "onError" | "excludeAliases">) {
   const client = useMyChartClient();
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [selected, setSelected] = useState<Organization | null>(null);
@@ -24,6 +27,16 @@ function ConnectMyChartInner({ onError }: Pick<ConnectMyChartProps, "onError">) 
       .finally(() => setLoading(false));
   }, [client, onError]);
 
+  // Hide already-connected hospitals from the picker (they reappear once
+  // disconnected, since the host passes the current connected aliases).
+  const excluded = new Set(excludeAliases);
+  const available = orgs.filter((o) => !excluded.has(o.alias));
+
+  // If the selected org just got connected (excluded), drop it.
+  useEffect(() => {
+    if (selected && excluded.has(selected.alias)) setSelected(null);
+  }, [selected, excludeAliases]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const connect = async () => {
     if (!selected) return;
     setConnecting(true);
@@ -41,26 +54,27 @@ function ConnectMyChartInner({ onError }: Pick<ConnectMyChartProps, "onError">) 
 
   return (
     <>
-      <h2>Connect MyChart</h2>
-      <p className="mychart-muted">
-        Select your hospital and connect your MyChart account.
-      </p>
-
       {loading && <p>Loading organizations…</p>}
       {error && <div className="mychart-error">{error}</div>}
 
       {!loading && (
         <>
-          <label htmlFor="mychart-org">Hospital / organization</label>
           <OrganizationCombobox
-            organizations={orgs}
+            organizations={available}
             value={selected}
             onChange={setSelected}
-            disabled={connecting || orgs.length === 0}
+            disabled={connecting || available.length === 0}
             placeholder="Start typing a hospital name…"
           />
+          {available.length === 0 && (
+            <p className="mychart-muted">
+              {orgs.length === 0
+                ? "No hospitals are available to connect."
+                : "You've connected all available hospitals."}
+            </p>
+          )}
           <button type="button" onClick={connect} disabled={!selected || connecting}>
-            {connecting ? "Redirecting…" : "Connect MyChart"}
+            {connecting ? "Redirecting…" : selected ? `Connect to ${selected.title}` : "Connect"}
           </button>
         </>
       )}
@@ -68,10 +82,16 @@ function ConnectMyChartInner({ onError }: Pick<ConnectMyChartProps, "onError">) 
   );
 }
 
-export function ConnectMyChart({ apiClient, apiBasePath, className, onError }: ConnectMyChartProps) {
+export function ConnectMyChart({
+  apiClient,
+  apiBasePath,
+  className,
+  onError,
+  excludeAliases,
+}: ConnectMyChartProps) {
   return (
     <MyChartProvider apiClient={apiClient} apiBasePath={apiBasePath} className={className}>
-      <ConnectMyChartInner onError={onError} />
+      <ConnectMyChartInner onError={onError} excludeAliases={excludeAliases} />
     </MyChartProvider>
   );
 }

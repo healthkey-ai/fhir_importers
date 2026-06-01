@@ -11,7 +11,7 @@ import { MyChartCallback } from "./federation/MyChartCallback";
 function DevHarness() {
   const apiClient = useMemo(() => {
     const client = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8030",
+      baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:9300",
     });
     // Dev convenience: attach a token if one was stashed for local testing.
     const token = localStorage.getItem("dev_token");

@@ -39,9 +39,15 @@
 .mychart-root button {
   margin-top: 1.5rem;
   cursor: pointer;
-  background: #3182ce;
-  color: white;
-  border-color: #3182ce;
+  /* Inherit the host app's primary color (shadcn HSL vars); fall back to a
+     blue for the standalone dev harness where the host vars aren't defined. */
+  background: hsl(var(--primary, 210 62% 50%));
+  color: hsl(var(--primary-foreground, 0 0% 100%));
+  border-color: hsl(var(--primary, 210 62% 50%));
+}
+
+.mychart-root button:hover:not(:disabled) {
+  filter: brightness(0.92);
 }
 
 .mychart-root button:disabled {
@@ -58,6 +64,13 @@
 .mychart-root .combobox-input {
   width: 100%;
   outline: none;
+  /* Dropdown chevron on the right (custom combobox has no native arrow). */
+  padding-right: 2rem;
+  background-color: white;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  background-size: 0.85rem;
 }
 
 .mychart-root .combobox-input:focus {
