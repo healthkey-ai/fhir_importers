@@ -14,10 +14,8 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 
 def _timeout() -> httpx.Timeout:
-    # ctomop ingests the whole patient compartment synchronously in the request
-    # (per-row concept lookups + PatientInfo refresh), so a first full-patient
-    # sync can take a while. Read timeout is generous + configurable.
-    read = getattr(settings, "CTOMOP_HTTP_TIMEOUT_SECONDS", 180.0)
+    # ctomop's /api/fhir/sync/ is batched (bulk inserts), so it returns quickly.
+    read = getattr(settings, "CTOMOP_HTTP_TIMEOUT_SECONDS", 30.0)
     return httpx.Timeout(connect=5.0, read=read, write=30.0, pool=5.0)
 
 

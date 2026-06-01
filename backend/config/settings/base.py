@@ -190,8 +190,9 @@ CTOMOP_SYNC_URL = env(
     default=f"{_ctomop_base.rstrip('/')}/api/fhir/sync/" if _ctomop_base else "",
 )
 CTOMOP_SERVICE_TOKEN = env("CTOMOP_SERVICE_TOKEN", default="")
-# A first full-patient ingest is synchronous on ctomop and can be slow.
-CTOMOP_HTTP_TIMEOUT_SECONDS = env.float("CTOMOP_HTTP_TIMEOUT_SECONDS", default=180.0)
+# ctomop's /api/fhir/sync/ is batched (bulk inserts, no per-call PatientInfo
+# rebuild) so it returns in ~1-2s; 30s is plenty of headroom.
+CTOMOP_HTTP_TIMEOUT_SECONDS = env.float("CTOMOP_HTTP_TIMEOUT_SECONDS", default=30.0)
 
 # Fernet key (urlsafe-base64, 32 bytes) for encrypting Epic tokens at rest.
 # Empty → dev fallback derived from SECRET_KEY (see apps.epic.crypto). Set a
