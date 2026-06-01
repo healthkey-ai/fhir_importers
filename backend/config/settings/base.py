@@ -231,6 +231,8 @@ EPIC_ORGANIZATIONS_FILE = env(
     default=str(BASE_DIR / "apps" / "epic" / "organizations.json"),
 )
 EPIC_STATE_TTL_SECONDS = env.int("EPIC_STATE_TTL_SECONDS", default=600)
+# PKCE state backend: "db" (default — works on stateless Cloud Run) or "redis".
+EPIC_STATE_BACKEND = env("EPIC_STATE_BACKEND", default="db")
 EPIC_HTTP_TIMEOUT_SECONDS = env.float("EPIC_HTTP_TIMEOUT_SECONDS", default=15.0)
 
 # ── Firebase Admin SDK (integrated mode) ──────────────────────────────────

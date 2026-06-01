@@ -61,6 +61,29 @@ class Connection(models.Model):
         return f"Connection(identity={self.identity_id}, org={self.org_alias})"
 
 
+class EpicAuthState(models.Model):
+    """Short-lived PKCE/OAuth state for an in-flight Epic authorization.
+
+    DB-backed (rather than Redis) so it survives across Cloud Run instances with
+    no shared cache. Written at authorize-start, consumed exactly once on
+    callback; expired rows are purged opportunistically on the next write.
+    """
+
+    state = models.CharField(max_length=255, primary_key=True)
+    code_verifier = models.CharField(max_length=255)
+    token_endpoint = models.URLField(max_length=1024)
+    organization_alias = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        db_table = "epic_auth_state"
+        indexes = [models.Index(fields=["expires_at"], name="idx_authstate_expires")]
+
+    def __str__(self):
+        return f"EpicAuthState(org={self.organization_alias})"
+
+
 class SyncJob(models.Model):
     """One FHIR fetch → ctomop ingest run for a Connection."""
 

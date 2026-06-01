@@ -22,7 +22,7 @@ from .client import EpicClient, EpicTokens, SmartConfiguration
 from .epic_config import epic_config_for_org
 from .jwt_utils import build_client_assertion
 from .organizations import OrganizationRegistry
-from .state_store import PendingState, RedisStateStore
+from .state_store import PendingState, StateStore
 
 _logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ class EpicAuthService:
     def __init__(
         self,
         client: EpicClient,
-        state_store: RedisStateStore,
+        state_store: StateStore,
         organizations: OrganizationRegistry,
     ):
         self._client = client
