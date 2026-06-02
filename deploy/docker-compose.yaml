@@ -7,7 +7,8 @@ services:
       - .env
     networks:
       - healthkey_fhir_backend
-      - traefik
+    ports:
+      - "0.0.0.0:8030:8000"
     environment:
       # Bare names → pulled from host shell (over `env_file`); `KEY=value` lines override the file.
       - DATABASE_URL
@@ -28,13 +29,6 @@ services:
     volumes:
       - /data/credentials/epic_staging.key:/credentials/epic_staging.key:ro
       - /data/credentials/epic_prod.key:/credentials/epic_prod.key:ro
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.healthkey_fhir_backend.tls=true
-      - traefik.http.routers.healthkey_fhir_backend.tls.certresolver=letsencrypt
-      - traefik.http.routers.healthkey_fhir_backend.entrypoints=websecure
-      - traefik.http.routers.healthkey_fhir_backend.rule=Host(`healthkey-fhir-backend.cancerbot.org`)
-      - traefik.http.services.healthkey_fhir_backend.loadbalancer.server.port=8000
     depends_on:
       redis: { condition: service_healthy }
       postgres: { condition: service_healthy }
@@ -61,7 +55,7 @@ services:
       POSTGRES_USER: fhir
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - /data/healthkey-fhir-importers-postgres/data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U fhir -d fhir_importers" ]
       interval: 5s
@@ -69,10 +63,5 @@ services:
       retries: 5
 
 networks:
-  traefik:
-    external: true
   healthkey_fhir_backend:
     name: healthkey_fhir_backend
-
-volumes:
-  postgres_data:
