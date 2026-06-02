@@ -32,5 +32,5 @@ deploy:
 		--exclude='*.pyc' \
 		--exclude='.idea/' \
 		--exclude='*.tsbuildinfo' \
-		./deploy $(DEPLOY_HOST):$(DEPLOY_PATH)/
+		./deploy/ $(DEPLOY_HOST):$(DEPLOY_PATH)/
 
