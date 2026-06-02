@@ -68,10 +68,9 @@ jobs:
         run: gcloud auth configure-docker ${GCP_REGION}-docker.pkg.dev --quiet
 
       - name: Build and push image
-        env:
-          GCP_PROJECT: ${{ secrets.GCP_PROJECT }}
         run: |
-          IMAGE_URI="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT}/${AR_REPO}/${IMAGE_NAME}"
+          # GOOGLE_CLOUD_PROJECT is auto-exported by google-github-actions/auth.
+          IMAGE_URI="${GCP_REGION}-docker.pkg.dev/${GOOGLE_CLOUD_PROJECT}/${AR_REPO}/${IMAGE_NAME}"
           echo "Building ${IMAGE_URI}:${GITHUB_SHA}"
           docker build --platform linux/amd64 --provenance=false \
             -t "${IMAGE_URI}:${GITHUB_SHA}" \
