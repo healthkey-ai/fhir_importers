@@ -28,3 +28,8 @@ class MyChartConnection(SQLModel, table=True):
     expires_at: datetime = Field(sa_column=_tz_column())
     created_at: datetime = Field(sa_column=_tz_column())
     updated_at: datetime = Field(sa_column=_tz_column())
+    # Written by Airflow's fhir_extract DAG after each successful sync.
+    last_synced_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(DateTime(timezone=True), nullable=True),
+    )

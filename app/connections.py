@@ -16,6 +16,7 @@ class ConnectionMetadata:
     scope: str | None
     expires_at: datetime
     connected_at: datetime
+    last_synced_at: datetime | None = None
 
 
 class BaseConnectionsRepository(abc.ABC):
@@ -107,6 +108,7 @@ class ConnectionsRepository(BaseConnectionsRepository):
             scope=conn.scope,
             expires_at=conn.expires_at,
             connected_at=conn.created_at,
+            last_synced_at=conn.last_synced_at,
         )
 
     async def delete(self, user_uid: str, organization_alias: str) -> bool:
@@ -137,6 +139,7 @@ class ConnectionsRepository(BaseConnectionsRepository):
                 scope=r.scope,
                 expires_at=r.expires_at,
                 connected_at=r.created_at,
+                last_synced_at=r.last_synced_at,
             )
             for r in rows
         ]

@@ -9,6 +9,7 @@ class ConnectionOut(BaseModel):
     scope: str | None = None
     expires_at: datetime
     connected_at: datetime
+    last_synced_at: datetime | None = None
 
 
 class OrganizationOut(BaseModel):

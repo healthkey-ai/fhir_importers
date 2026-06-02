@@ -70,6 +70,7 @@ async def list_connections(
             scope=i.scope,
             expires_at=i.expires_at,
             connected_at=i.connected_at,
+            last_synced_at=i.last_synced_at,
         )
         for i in items
     ]

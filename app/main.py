@@ -14,7 +14,7 @@ from .auth import FirebaseTokenVerifier
 from .client import EpicClient
 from .config import Settings
 from .crypto import TokenCipher
-from .db import create_engine, create_sessionmaker, init_db
+from .db import create_engine, create_sessionmaker
 from .organizations import OrganizationRegistry
 from .routers import router as epic_router
 from .service import EpicAuthService
@@ -47,8 +47,9 @@ async def lifespan(app: FastAPI):
         organizations=organizations,
     )
 
+    # Schema is managed by Alembic; the container entrypoint runs
+    # `alembic upgrade head` before uvicorn starts.
     engine = create_engine(settings.database_url)
-    await init_db(engine)
 
     app.state.settings = settings
     app.state.organizations = organizations

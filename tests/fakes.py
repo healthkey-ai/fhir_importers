@@ -50,12 +50,14 @@ class InMemoryConnectionsRepository(BaseConnectionsRepository):
         now = datetime.now(timezone.utc)
         self._created.setdefault(key, now)
         self._tokens[key] = _StoredTokens(access_token, refresh_token, id_token)
+        prior = self._meta.get(key)
         meta = ConnectionMetadata(
             organization_alias=organization_alias,
             patient=patient,
             scope=scope,
             expires_at=expires_at,
             connected_at=self._created[key],
+            last_synced_at=prior.last_synced_at if prior else None,
         )
         self._meta[key] = meta
         return meta
