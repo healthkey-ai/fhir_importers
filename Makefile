@@ -3,8 +3,9 @@ NODE_MODULES := $(FRONTEND_DIR)/node_modules
 
 DEPLOY_HOST := cancerbot.app
 DEPLOY_PATH := /apps/fhir-importers
+SMOKE_URL   := http://cancerbot.app:8030
 
-.PHONY: ui ui-build pytest deploy
+.PHONY: ui ui-build pytest smoke deploy
 
 $(NODE_MODULES): $(FRONTEND_DIR)/package.json
 	cd $(FRONTEND_DIR) && npm install
@@ -19,6 +20,12 @@ ui-build: $(NODE_MODULES)
 pytest:
 	@pip install -q -r requirements-dev.txt
 	@python -m pytest
+
+smoke:
+	@echo "→ $(SMOKE_URL)/remote/remoteEntry.js"
+	@curl -fsSI $(SMOKE_URL)/remote/remoteEntry.js | head -1
+	@echo "→ $(SMOKE_URL)/epic/organizations"
+	@curl -fsS $(SMOKE_URL)/epic/organizations | head -c 300; echo
 
 deploy:
 	@echo "Deploying to $(DEPLOY_HOST)..."
