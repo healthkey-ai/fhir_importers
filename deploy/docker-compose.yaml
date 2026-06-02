@@ -1,0 +1,78 @@
+services:
+  app:
+    image: us-central1-docker.pkg.dev/cancerbot-app/healthkey-fhir-backend/app:${IMAGE_TAG}
+    restart: unless-stopped
+    mem_limit: 1g
+    env_file:
+      - .env
+    networks:
+      - healthkey_fhir_backend
+      - traefik
+    environment:
+      # Bare names → pulled from host shell (over `env_file`); `KEY=value` lines override the file.
+      - DATABASE_URL
+      - TOKEN_ENCRYPTION_KEY
+      - FIREBASE_PROJECT_ID
+      - CORS_ALLOWED_ORIGINS
+      - STAGING_CLIENT_ID
+      - STAGING_REDIRECT_URI
+      - STAGING_JWKS_KID
+      - STAGING_SCOPES
+      - PROD_CLIENT_ID
+      - PROD_REDIRECT_URI
+      - PROD_JWKS_KID
+      - PROD_SCOPES
+      - REDIS_URL=redis://redis:6379/0
+      - STAGING_PRIVATE_KEY_PATH=/credentials/epic_staging.key
+      - PROD_PRIVATE_KEY_PATH=/credentials/epic_prod.key
+    volumes:
+      - /data/credentials/epic_staging.key:/credentials/epic_staging.key:ro
+      - /data/credentials/epic_prod.key:/credentials/epic_prod.key:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.healthkey_fhir_backend.tls=true
+      - traefik.http.routers.healthkey_fhir_backend.tls.certresolver=letsencrypt
+      - traefik.http.routers.healthkey_fhir_backend.entrypoints=websecure
+      - traefik.http.routers.healthkey_fhir_backend.rule=Host(`healthkey-fhir-backend.cancerbot.org`)
+      - traefik.http.services.healthkey_fhir_backend.loadbalancer.server.port=8000
+    depends_on:
+      redis: { condition: service_healthy }
+      postgres: { condition: service_healthy }
+
+  redis:
+    image: redis:8.0.2-bookworm
+    restart: unless-stopped
+    networks:
+      - healthkey_fhir_backend
+    command: [ "redis-server", "--save", "", "--appendonly", "no" ]
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    networks:
+      - healthkey_fhir_backend
+    environment:
+      POSTGRES_DB: fhir_importers
+      POSTGRES_USER: fhir
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U fhir -d fhir_importers" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+networks:
+  traefik:
+    external: true
+  healthkey_fhir_backend:
+    name: healthkey_fhir_backend
+
+volumes:
+  postgres_data:
