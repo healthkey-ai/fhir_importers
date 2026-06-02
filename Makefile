@@ -3,7 +3,7 @@ NODE_MODULES := $(FRONTEND_DIR)/node_modules
 
 DEPLOY_HOST := cancerbot.app
 DEPLOY_PATH := /apps/fhir-importers
-SMOKE_URL   := http://cancerbot.app:8030
+SMOKE_URL   := https://healthkey-fhir-backend.cancerbot.org
 
 .PHONY: ui ui-build pytest smoke deploy
 
@@ -25,7 +25,7 @@ smoke:
 	@echo "→ $(SMOKE_URL)/remote/remoteEntry.js"
 	@curl -fsSI $(SMOKE_URL)/remote/remoteEntry.js | head -1
 	@echo "→ $(SMOKE_URL)/epic/organizations"
-	@curl -fsS $(SMOKE_URL)/epic/organizations | head -c 300; echo
+	@curl -fsS $(SMOKE_URL)/epic/organizations | python3 -c "import json,sys; o=json.load(sys.stdin); print(' ', len(o), 'orgs, first:', o[0]['alias'])"
 
 deploy:
 	@echo "Deploying to $(DEPLOY_HOST)..."
