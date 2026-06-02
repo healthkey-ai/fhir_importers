@@ -1,4 +1,48 @@
+[tool.pylint]
+max-line-length = 120
+min-similarity-lines = 6
+disable = [
+    "C0114", # Missing module docstring (missing-module-docstring)
+    "R0903", # Too few public methods (1/2) (too-few-public-methods)
+    "R0902", # Too many instance attributes (9/7) (too-many-instance-attributes)
+    "R1734", # Consider using [] instead of list() (use-list-literal)
+    "R1735", # Consider using '{}' instead of a call to 'dict'. (use-dict-literal)
+]
+
+[tool.pylint.messages_control]
+[tool.pylint.'tests/**']
+disable = [
+    "R0915", # Too many statements (x/50) (too-many-statements)
+]
+
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+disallow_untyped_defs = true
+warn_return_any = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
+show_error_codes = true
+implicit_reexport = true
+
+[[tool.mypy.overrides]]
+module = ["sqlalchemy", "sqlalchemy.*"]
+ignore_missing_imports = true
+
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+minversion = "7.0"
 testpaths = ["tests"]
-addopts = "-q"
+addopts = "-ra -q"
+
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
