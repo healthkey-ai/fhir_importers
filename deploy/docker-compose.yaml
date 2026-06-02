@@ -1,39 +1,50 @@
+x-app-common: &app-common
+  image: us-central1-docker.pkg.dev/cancerbot-app/healthkey-fhir-backend/app:${IMAGE_TAG}
+  env_file:
+    - .env
+  networks:
+    - healthkey_fhir_backend
+  environment:
+    # Bare names → pulled from host shell (over `env_file`); `KEY=value` lines override the file.
+    - DATABASE_URL
+    - TOKEN_ENCRYPTION_KEY
+    - FIREBASE_PROJECT_ID
+    - CORS_ALLOWED_ORIGINS
+    - STAGING_CLIENT_ID
+    - STAGING_REDIRECT_URI
+    - STAGING_JWKS_KID
+    - STAGING_SCOPES
+    - PROD_CLIENT_ID
+    - PROD_REDIRECT_URI
+    - PROD_JWKS_KID
+    - PROD_SCOPES
+    - REDIS_URL=redis://redis:6379/0
+    - FIREBASE_AUTH_EMULATOR_HOST=firebase-auth:9099
+    - STAGING_PRIVATE_KEY_PATH=/credentials/epic_staging.key
+    - PROD_PRIVATE_KEY_PATH=/credentials/epic_prod.key
+  volumes:
+    - /data/credentials/epic_staging.key:/credentials/epic_staging.key:ro
+    - /data/credentials/epic_prod.key:/credentials/epic_prod.key:ro
+
 services:
   app:
-    image: us-central1-docker.pkg.dev/cancerbot-app/healthkey-fhir-backend/app:${IMAGE_TAG}
+    <<: *app-common
     restart: unless-stopped
     mem_limit: 1g
-    env_file:
-      - .env
-    networks:
-      - healthkey_fhir_backend
     ports:
       - "0.0.0.0:8030:8000"
-    environment:
-      # Bare names → pulled from host shell (over `env_file`); `KEY=value` lines override the file.
-      - DATABASE_URL
-      - TOKEN_ENCRYPTION_KEY
-      - FIREBASE_PROJECT_ID
-      - CORS_ALLOWED_ORIGINS
-      - STAGING_CLIENT_ID
-      - STAGING_REDIRECT_URI
-      - STAGING_JWKS_KID
-      - STAGING_SCOPES
-      - PROD_CLIENT_ID
-      - PROD_REDIRECT_URI
-      - PROD_JWKS_KID
-      - PROD_SCOPES
-      - REDIS_URL=redis://redis:6379/0
-      - FIREBASE_AUTH_EMULATOR_HOST=firebase-auth:9099
-      - STAGING_PRIVATE_KEY_PATH=/credentials/epic_staging.key
-      - PROD_PRIVATE_KEY_PATH=/credentials/epic_prod.key
-    volumes:
-      - /data/credentials/epic_staging.key:/credentials/epic_staging.key:ro
-      - /data/credentials/epic_prod.key:/credentials/epic_prod.key:ro
     depends_on:
       redis: { condition: service_healthy }
       postgres: { condition: service_healthy }
       firebase-auth: { condition: service_started }
+
+  # One-shot. Invoke during deploy with `docker compose run --rm migrate`.
+  migrate:
+    <<: *app-common
+    command: [ "alembic", "upgrade", "head" ]
+    restart: "no"
+    depends_on:
+      postgres: { condition: service_healthy }
 
   redis:
     image: redis:8.0.2-bookworm
