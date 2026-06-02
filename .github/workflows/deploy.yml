@@ -115,3 +115,23 @@ jobs:
             docker compose up -d --remove-orphans
             docker compose ps
           EOF
+
+  smoke:
+    name: Smoke
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Wait for /health
+        run: |
+          for i in $(seq 1 30); do
+            curl -fsS https://healthkey-fhir-backend.cancerbot.org/health && exit 0
+            sleep 2
+          done
+          echo "App didn't become ready in 60s"
+          exit 1
+
+      - name: Smoke (remoteEntry.js + /epic/organizations)
+        run: make smoke
