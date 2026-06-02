@@ -2,7 +2,7 @@ FRONTEND_DIR := frontend
 NODE_MODULES := $(FRONTEND_DIR)/node_modules
 
 DEPLOY_HOST := cancerbot.app
-DEPLOY_PATH := ~/fhir-importers
+DEPLOY_PATH := /apps/fhir-importers
 
 .PHONY: ui ui-build pytest deploy
 
@@ -23,6 +23,7 @@ pytest:
 deploy:
 	@echo "Deploying to $(DEPLOY_HOST)..."
 	rsync -az --delete \
+		--rsync-path="sudo rsync" \
 		--exclude='.git/' \
 		--exclude='venv/' \
 		--exclude='$(FRONTEND_DIR)/node_modules/' \
@@ -31,5 +32,5 @@ deploy:
 		--exclude='*.pyc' \
 		--exclude='.idea/' \
 		--exclude='*.tsbuildinfo' \
-		./ $(DEPLOY_HOST):$(DEPLOY_PATH)/
-	ssh $(DEPLOY_HOST) "cd $(DEPLOY_PATH) && docker-compose up -d --build"
+		./deploy $(DEPLOY_HOST):$(DEPLOY_PATH)/
+
