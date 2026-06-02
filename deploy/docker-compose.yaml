@@ -24,6 +24,7 @@ services:
       - PROD_JWKS_KID
       - PROD_SCOPES
       - REDIS_URL=redis://redis:6379/0
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase-auth:9099
       - STAGING_PRIVATE_KEY_PATH=/credentials/epic_staging.key
       - PROD_PRIVATE_KEY_PATH=/credentials/epic_prod.key
     volumes:
@@ -32,6 +33,7 @@ services:
     depends_on:
       redis: { condition: service_healthy }
       postgres: { condition: service_healthy }
+      firebase-auth: { condition: service_started }
 
   redis:
     image: redis:8.0.2-bookworm
@@ -44,6 +46,19 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  firebase-auth:
+    image: andreysenov/firebase-tools:latest
+    restart: unless-stopped
+    networks:
+      - healthkey_fhir_backend
+    # Loopback-only — the emulator has no auth and mints tokens for any uid.
+    ports:
+      - "127.0.0.1:9099:9099"
+    working_dir: /firebase
+    volumes:
+      - ./firebase.json:/firebase/firebase.json:ro
+    command: [ "firebase", "emulators:start", "--only", "auth", "--project", "demo-ht-phr" ]
 
   postgres:
     image: postgres:16-alpine
