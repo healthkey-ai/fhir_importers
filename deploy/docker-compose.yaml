@@ -53,7 +53,8 @@ services:
     environment:
       POSTGRES_DB: fhir_importers
       POSTGRES_USER: fhir
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # Only read on first boot to init the data dir; safe to clear from .env after.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
     volumes:
       - /data/healthkey-fhir-importers-postgres/data:/var/lib/postgresql/data
     healthcheck:
