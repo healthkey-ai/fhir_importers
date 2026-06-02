@@ -81,7 +81,7 @@ jobs:
           docker push "${IMAGE_URI}:latest"
 
   deploy:
-    name: Pull + restart on ${{ secrets.SSH_HOST }}
+    name: Deploy
     needs: [docker_build]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
