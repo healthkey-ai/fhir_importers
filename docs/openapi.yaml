@@ -1,0 +1,333 @@
+# OpenAPI specification for fhir-importers.
+#
+# Source of truth for service-internal design: fhir-importers/ (same dir).
+# Source of truth for cross-service contracts:  fhir-importers/DATA_FLOW.md (same dir tree).
+#
+# This spec describes the API as currently implemented in app/routers.py and
+# app/schemas.py. Known deltas vs the design docs (target state):
+#
+#   1. trace_id — fhir-importers/DATA_FLOW.md (Observability) and fhir-importers/observability.md require
+#      trace_id on user-initiated flows and on the fhir_extract DAG conf. Not
+#      yet in StartOAuthResponse, SyncConnectionResponse, or the DAG conf payload.
+#   2. Epic-5xx → 502 mapping on /auth/finish — fhir-importers/api.md specifies
+#      this; not yet implemented in app/service.py (would propagate as 500 today).
+#
+openapi: 3.1.0
+info:
+  title: MyChart Integration Service (fhir-importers)
+  version: 0.1.0
+  description: |
+    OAuth handler and connection management for SMART-on-FHIR (Epic MyChart).
+    Triggers the `fhir_extract` Airflow DAG on connect and on explicit re-sync.
+
+servers:
+  - url: http://localhost:8030
+    description: local dev
+  - url: https://fhir-importers.healthkey
+    description: production (placeholder)
+
+tags:
+  - name: meta
+    description: Liveness and metadata
+  - name: epic-auth
+    description: SMART-on-FHIR OAuth and connection management
+
+paths:
+  /health:
+    get:
+      tags: [meta]
+      summary: Liveness check
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /epic/organizations:
+    get:
+      tags: [epic-auth]
+      summary: List registered Epic organizations
+      description: Returns the orgs configured at deploy time from `organizations.json`. No auth required.
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Organization'
+
+  /epic/auth/start:
+    post:
+      tags: [epic-auth]
+      summary: Initiate OAuth — return Epic authorization URL
+      description: |
+        Runs SMART discovery against the chosen org, generates PKCE `code_verifier`
+        + `code_challenge` (S256), generates cryptographic `state`, persists
+        `PendingState{organization_alias, code_verifier}` in Redis with TTL ≤10 min,
+        returns the authorization URL.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartOAuthRequest'
+      responses:
+        '200':
+          description: Authorization URL ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartOAuthResponse'
+        '404':
+          description: Unknown organization alias
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /epic/auth/finish:
+    post:
+      tags: [epic-auth]
+      summary: Complete OAuth — exchange code for tokens
+      description: |
+        Atomically consumes `state` from Redis (GETDEL), exchanges `code` via PKCE
+        + RS256 client_assertion against Epic's token endpoint, encrypts the
+        returned tokens, upserts `mychart_connections` keyed by
+        `(user_uid, organization_alias)`, and fires the `fhir_extract` DAG.
+
+        DAG trigger failures are logged and swallowed — the connection persists;
+        the user can retry via the re-sync endpoint.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinishOAuthRequest'
+      responses:
+        '200':
+          description: Connection persisted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinishOAuthResponse'
+        '400':
+          description: State expired/replayed/unknown
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /epic/connections:
+    get:
+      tags: [epic-auth]
+      summary: List caller's connections
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Connection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /epic/connections/{organization_alias}:
+    delete:
+      tags: [epic-auth]
+      summary: Delete a connection
+      description: |
+        Deletes the connection identified by `(authenticated user_uid, organization_alias)`.
+        Returns 404 if the alias is unknown for the caller — cross-user access
+        does not leak the existence of another user's row.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: organization_alias
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: No connection for this user/org
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /epic/connections/{organization_alias}/sync:
+    post:
+      tags: [epic-auth]
+      summary: Re-trigger the fhir_extract DAG for this connection
+      description: |
+        Existence-checks `(authenticated user_uid, organization_alias)`, then
+        triggers the `fhir_extract` Airflow DAG with conf
+        `{user_uid, organization_alias, epic_patient_id}`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: organization_alias
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: DAG run triggered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncConnectionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: No connection for this user/org
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Firebase ID token. Verified per request via firebase-admin.
+        `iss = https://securetoken.google.com/{FIREBASE_PROJECT_ID}`,
+        `sub = user_uid` (used as the connection-owner key).
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid Firebase JWT
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Organization:
+      type: object
+      required: [alias, title, endpoint_url]
+      properties:
+        alias:
+          type: string
+          example: my_chart_central
+        title:
+          type: string
+          example: MyChart (Epic sandbox)
+        endpoint_url:
+          type: string
+          format: uri
+          description: Epic SMART base URL for this org
+
+    StartOAuthRequest:
+      type: object
+      required: [organization_alias]
+      properties:
+        organization_alias:
+          type: string
+          description: Alias of an organization registered in `organizations.json`
+
+    StartOAuthResponse:
+      type: object
+      required: [authorization_url, state]
+      properties:
+        authorization_url:
+          type: string
+          format: uri
+        state:
+          type: string
+          description: Opaque, ≥256-bit random; the caller forwards to Epic and back
+
+    FinishOAuthRequest:
+      type: object
+      required: [code, state]
+      properties:
+        code:
+          type: string
+        state:
+          type: string
+
+    FinishOAuthResponse:
+      type: object
+      required: [organization_alias, status, connected_at]
+      properties:
+        organization_alias:
+          type: string
+        patient:
+          type: string
+          nullable: true
+          description: SMART-on-FHIR patient launch context, if Epic returned one
+        scope:
+          type: string
+          nullable: true
+        status:
+          type: string
+          example: connected
+        connected_at:
+          type: string
+          format: date-time
+
+    Connection:
+      type: object
+      required: [organization_alias, expires_at, connected_at]
+      properties:
+        organization_alias:
+          type: string
+        patient:
+          type: string
+          nullable: true
+        scope:
+          type: string
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+        connected_at:
+          type: string
+          format: date-time
+        last_synced_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    SyncConnectionResponse:
+      type: object
+      required: [organization_alias, dag_run_id]
+      properties:
+        organization_alias:
+          type: string
+        dag_run_id:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
