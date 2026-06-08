@@ -8,13 +8,13 @@ from .auth import get_current_user_uid
 from .connections import BaseConnectionsRepository, ConnectionsRepository
 from .organizations import OrganizationRegistry, UnknownOrganization
 from .schemas import (
-    ConnectionOut,
-    FinishRequest,
-    FinishResponse,
-    OrganizationOut,
-    StartRequest,
-    StartResponse,
-    SyncResponse,
+    Connection,
+    FinishOAuthRequest,
+    FinishOAuthResponse,
+    Organization,
+    StartOAuthRequest,
+    StartOAuthResponse,
+    SyncConnectionResponse,
 )
 from .service import EpicAuthService, InvalidStateError
 
@@ -57,14 +57,14 @@ async def get_connections_repo(request: Request) -> AsyncIterator[BaseConnection
 router = APIRouter(prefix="/epic", tags=["epic-auth"])
 
 
-@router.get("/connections", response_model=list[ConnectionOut])
+@router.get("/connections", response_model=list[Connection])
 async def list_connections(
     uid: str = Depends(get_current_user_uid),
     repo: BaseConnectionsRepository = Depends(get_connections_repo),
-) -> list[ConnectionOut]:
+) -> list[Connection]:
     items = await repo.list_for_user(uid)
     return [
-        ConnectionOut(
+        Connection(
             organization_alias=i.organization_alias,
             patient=i.patient,
             scope=i.scope,
@@ -76,12 +76,12 @@ async def list_connections(
     ]
 
 
-@router.get("/organizations", response_model=list[OrganizationOut])
+@router.get("/organizations", response_model=list[Organization])
 async def list_organizations(
     organizations: OrganizationRegistry = Depends(get_organizations),
-) -> list[OrganizationOut]:
+) -> list[Organization]:
     return [
-        OrganizationOut(alias=o.alias, title=o.title, endpoint_url=o.endpoint_url)
+        Organization(alias=o.alias, title=o.title, endpoint_url=o.endpoint_url)
         for o in organizations.list()
     ]
 
@@ -101,11 +101,11 @@ async def delete_connection(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.post("/auth/start", response_model=StartResponse)
+@router.post("/auth/start", response_model=StartOAuthResponse)
 async def start(
-    body: StartRequest,
+    body: StartOAuthRequest,
     service: EpicAuthService = Depends(get_epic_auth_service),
-) -> StartResponse:
+) -> StartOAuthResponse:
     try:
         result = await service.start(body.organization_alias)
     except UnknownOrganization:
@@ -113,17 +113,17 @@ async def start(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Unknown organization alias: {body.organization_alias}",
         )
-    return StartResponse(authorization_url=result.authorization_url, state=result.state)
+    return StartOAuthResponse(authorization_url=result.authorization_url, state=result.state)
 
 
-@router.post("/auth/finish", response_model=FinishResponse)
+@router.post("/auth/finish", response_model=FinishOAuthResponse)
 async def finish(
-    body: FinishRequest,
+    body: FinishOAuthRequest,
     uid: str = Depends(get_current_user_uid),
     repo: BaseConnectionsRepository = Depends(get_connections_repo),
     service: EpicAuthService = Depends(get_epic_auth_service),
     airflow: BaseAirflowClient = Depends(get_airflow_client),
-) -> FinishResponse:
+) -> FinishOAuthResponse:
     try:
         result = await service.finish(body.code, body.state)
     except InvalidStateError as e:
@@ -151,7 +151,7 @@ async def finish(
     except Exception:
         _logger.exception("Failed to trigger %s DAG (connection persisted)", FHIR_EXTRACT_DAG)
 
-    return FinishResponse(
+    return FinishOAuthResponse(
         organization_alias=conn.organization_alias,
         patient=conn.patient,
         scope=conn.scope,
@@ -160,13 +160,13 @@ async def finish(
     )
 
 
-@router.post("/connections/{organization_alias}/sync", response_model=SyncResponse, status_code=status.HTTP_202_ACCEPTED)
+@router.post("/connections/{organization_alias}/sync", response_model=SyncConnectionResponse, status_code=status.HTTP_202_ACCEPTED)
 async def sync_connection(
     organization_alias: str,
     uid: str = Depends(get_current_user_uid),
     repo: BaseConnectionsRepository = Depends(get_connections_repo),
     airflow: BaseAirflowClient = Depends(get_airflow_client),
-) -> SyncResponse:
+) -> SyncConnectionResponse:
     items = await repo.list_for_user(uid)
     conn = next((c for c in items if c.organization_alias == organization_alias), None)
     if conn is None:
@@ -180,4 +180,4 @@ async def sync_connection(
         dag_run_prefix=_dag_run_prefix(uid, organization_alias),
         conf=_dag_conf(uid, organization_alias, conn.patient),
     )
-    return SyncResponse(organization_alias=organization_alias, dag_run_id=dag_run_id)
+    return SyncConnectionResponse(organization_alias=organization_alias, dag_run_id=dag_run_id)

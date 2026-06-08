@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
-class ConnectionOut(BaseModel):
+class Connection(BaseModel):
     organization_alias: str
     patient: str | None = None
     scope: str | None = None
@@ -12,27 +12,27 @@ class ConnectionOut(BaseModel):
     last_synced_at: datetime | None = None
 
 
-class OrganizationOut(BaseModel):
+class Organization(BaseModel):
     alias: str
     title: str
     endpoint_url: str
 
 
-class StartRequest(BaseModel):
+class StartOAuthRequest(BaseModel):
     organization_alias: str = Field(..., description="Alias of an organization registered in organizations.json")
 
 
-class StartResponse(BaseModel):
+class StartOAuthResponse(BaseModel):
     authorization_url: str
     state: str
 
 
-class FinishRequest(BaseModel):
+class FinishOAuthRequest(BaseModel):
     code: str
     state: str
 
 
-class FinishResponse(BaseModel):
+class FinishOAuthResponse(BaseModel):
     organization_alias: str
     patient: str | None = Field(None, description="SMART-on-FHIR patient launch context, if returned")
     scope: str | None = None
@@ -40,6 +40,6 @@ class FinishResponse(BaseModel):
     connected_at: datetime
 
 
-class SyncResponse(BaseModel):
+class SyncConnectionResponse(BaseModel):
     organization_alias: str
     dag_run_id: str
