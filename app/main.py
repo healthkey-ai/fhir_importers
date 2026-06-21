@@ -15,6 +15,8 @@ from .client import EpicClient
 from .config import Settings
 from .crypto import TokenCipher
 from .db import create_engine, create_sessionmaker
+from .healthex_client import HealthExClient
+from .healthex_routers import router as healthex_router
 from .organizations import OrganizationRegistry
 from .routers import router as epic_router
 from .service import EpicAuthService
@@ -63,6 +65,12 @@ async def lifespan(app: FastAPI):
         username=settings.airflow_username,
         password=settings.airflow_password,
     )
+    app.state.healthex_client = HealthExClient(
+        http=http_client,
+        base_url=settings.healthex_base_url,
+        api_key=settings.healthex_api_key,
+        api_secret=settings.healthex_api_secret,
+    )
 
     try:
         yield
@@ -81,6 +89,7 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization"],
 )
 app.include_router(epic_router)
+app.include_router(healthex_router)
 
 
 # Serve the federation remote bundle (remoteEntry.js + chunks) at /remote so the

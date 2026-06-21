@@ -43,3 +43,24 @@ class FinishOAuthResponse(BaseModel):
 class SyncConnectionResponse(BaseModel):
     organization_alias: str
     dag_run_id: str
+
+
+class HealthExLinkResponse(BaseModel):
+    project_id: str
+    external_id: str
+    healthex_patient_id: str | None = None
+    status: str
+    onboarding_url: str | None = None
+    consented_at: datetime | None = None
+    last_status_polled_at: datetime | None = None
+    last_synced_at: datetime | None = None
+    connected_at: datetime
+
+
+class HealthExStatusResponse(BaseModel):
+    project_id: str
+    healthex_patient_id: str | None
+    status: str
+    overall_status: str | None = None
+    vectorization_status: str | None = None
+    polled_at: datetime | None = None

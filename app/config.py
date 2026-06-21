@@ -60,6 +60,14 @@ class Settings(BaseSettings):
     airflow_username: str = ""
     airflow_password: str = ""
 
+    # HealthEx — aggregator hitting the production FHIR server at api.healthex.io.
+    # Auth is org-level (key+secret → 24h JWT). Patients belong to a Project we
+    # provision in HealthEx's Admin UI; project_id scopes every patient operation.
+    healthex_api_key: str = ""
+    healthex_api_secret: str = ""
+    healthex_project_id: str = ""
+    healthex_base_url: str = "https://api.healthex.io"
+
     # Directory holding the federation remote bundle (remoteEntry.js + chunks).
     # The image's multi-stage build drops the Vite output here; the app mounts it
     # at /remote via StaticFiles. If the directory is missing (e.g. running
