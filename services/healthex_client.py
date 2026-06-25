@@ -13,12 +13,6 @@ _logger = logging.getLogger(__name__)
 # has useful in-flight lifetime.
 _TOKEN_EXPIRY_SKEW_SECONDS = 60
 
-# HealthEx's "Patient not found for provided externalId" body string for
-# /v1/patients/consented/.../?externalId=... — returned as HTTP 400, NOT 404 —
-# means the patient hasn't consented yet (still pending). Sentinel-string match
-# is brittle but the only signal HealthEx exposes for this lifecycle state.
-_PATIENT_NOT_FOUND_FRAGMENT = "Patient not found for provided externalId"
-
 
 @dataclass(frozen=True)
 class HealthExDataStatus:
@@ -104,24 +98,27 @@ class HealthExClient(BaseHealthExClient):
     async def find_patient_id_by_external_id(
         self, *, project_id: str, external_id: str,
     ) -> str | None:
-        """Returns patientId once the patient consents; None while still pending."""
-        url = (
-            f"{self._base_url}/v1/patients/consented/study/{project_id}"
-            f"/PATIENT_DIRECTED_DATA_EXCHANGE"
-        )
+        """Returns patientId once the patient has an OPTED_IN
+        PATIENT_DIRECTED_DATA_EXCHANGE consent for this project; None otherwise.
+
+        Hits getPatientConsents which lists every consent record for an
+        externalId in a project, in contrast to has-patient-consented-to-study
+        which only confirms whether consent exists without exposing patientId.
+        """
+        url = f"{self._base_url}/v1/patients/consents"
         headers = {
             "Authorization": f"Bearer {await self._access_token()}",
             "Accept": "application/json",
         }
         try:
             response = await self._http.get(
-                url, params={"externalId": external_id}, headers=headers,
+                url,
+                params={"externalId": external_id, "projectId": project_id},
+                headers=headers,
             )
         except httpx.HTTPError as exc:
             raise HealthExError(f"GET {url}: {exc}") from exc
         _logger.info("HealthEx GET %s → %s", url, response.status_code)
-        if response.status_code == 400 and _PATIENT_NOT_FOUND_FRAGMENT in response.text:
-            return None
         if response.status_code >= 400:
             raise HealthExError(
                 f"GET {url} returned {response.status_code}: {response.text[:200]}"
@@ -130,7 +127,13 @@ class HealthExClient(BaseHealthExClient):
             data = response.json()
         except ValueError as exc:
             raise HealthExError(f"GET {url} returned non-JSON body") from exc
-        return _extract_patient_id(data)
+        for entry in data.get("results", []) or []:
+            cr = (entry or {}).get("consentRecord") or {}
+            if (cr.get("consentType") == "PATIENT_DIRECTED_DATA_EXCHANGE"
+                    and cr.get("consentStatus") == "OPTED_IN"
+                    and cr.get("patientId")):
+                return cr["patientId"]
+        return None
 
     async def get_data_retrieval_status(
         self, *, project_id: str, patient_id: str,
@@ -209,17 +212,3 @@ class HealthExClient(BaseHealthExClient):
             raise HealthExError(f"{method} {url} returned non-JSON body") from exc
 
 
-def _extract_patient_id(data: object) -> str | None:
-    # Live response shape for the consented-patients lookup is not yet observed
-    # (it returns 400 until a real patient consents). Defensive extraction —
-    # accept dict, list-of-dicts, or list-of-strings — and refine when we see
-    # the real shape end-to-end.
-    if isinstance(data, dict):
-        return data.get("patientId") or data.get("patient_id") or data.get("id")
-    if isinstance(data, list) and data:
-        first = data[0]
-        if isinstance(first, dict):
-            return first.get("patientId") or first.get("patient_id") or first.get("id")
-        if isinstance(first, str):
-            return first
-    return None
