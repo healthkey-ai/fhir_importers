@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 from .auth import get_current_user_uid
-from .healthex_client import BaseHealthExClient, HealthExError
+from services.healthex_client import BaseHealthExClient, HealthExError
 from .healthex_links import (
     STATUS_COMPLETE,
     STATUS_ERROR,

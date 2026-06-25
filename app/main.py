@@ -13,9 +13,10 @@ from .airflow import AirflowClient
 from .auth import FirebaseTokenVerifier
 from .client import EpicClient
 from .config import Settings
+from services.service_locator import ServiceLocator
+
 from .crypto import TokenCipher
 from .db import create_engine, create_sessionmaker
-from .healthex_client import HealthExClient
 from .healthex_routers import router as healthex_router
 from .organizations import OrganizationRegistry
 from .routers import router as epic_router
@@ -65,12 +66,7 @@ async def lifespan(app: FastAPI):
         username=settings.airflow_username,
         password=settings.airflow_password,
     )
-    app.state.healthex_client = HealthExClient(
-        http=http_client,
-        base_url=settings.healthex_base_url,
-        api_key=settings.healthex_api_key,
-        api_secret=settings.healthex_api_secret,
-    )
+    app.state.healthex_client = ServiceLocator(http=http_client).get_healthex_client()
 
     try:
         yield

@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 load_dotenv(ROOT / ".env")
 
-from app.healthex_client import HealthExClient
+from services.healthex_client import HealthExClient
 
 if len(sys.argv) != 2:
     sys.exit("Usage: verify_consent.py <external_id>")

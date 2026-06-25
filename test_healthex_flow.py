@@ -31,7 +31,7 @@ load_dotenv(ROOT / ".env")
 
 import httpx  # noqa: E402
 
-from app.healthex_client import HealthExClient, HealthExError  # noqa: E402
+from services.healthex_client import HealthExClient, HealthExError  # noqa: E402
 
 
 EXTERNAL_ID = "nick-e2e-smoke-001"
