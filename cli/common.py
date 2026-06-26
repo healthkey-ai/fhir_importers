@@ -1,23 +1,29 @@
-import base64
+import asyncio
+import functools
 import json
 
 import click
 import httpx
 
 
-def jwt_claims(token: str) -> dict:
-    _, payload_b64, _ = token.split(".")
-    payload_b64 += "=" * (-len(payload_b64) % 4)
-    return json.loads(base64.urlsafe_b64decode(payload_b64))
+def async_command(coro):
+    """Wrap an async function so click can invoke it as a sync command.
+
+    Lets command bodies use `await` directly while keeping click's signature
+    expectations (decorators expect a regular callable).
+    """
+    @functools.wraps(coro)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(coro(*args, **kwargs))
+    return wrapper
 
 
-def echo_response(r: httpx.Response) -> None:
-    """Print status + JSON-or-raw body. Exits non-zero on 4xx/5xx."""
-    color = "green" if r.is_success else "red"
-    click.secho(f"HTTP {r.status_code}", fg=color)
-    try:
-        click.echo(json.dumps(r.json(), indent=2, default=str))
-    except ValueError:
-        click.echo(r.text[:2000])
-    if not r.is_success:
-        raise SystemExit(1)
+def echo_response_dict(data: dict | list) -> None:
+    """Pretty-print a JSON-shaped value to stdout."""
+    click.echo(json.dumps(data, indent=2, default=str))
+
+
+def echo_http_error(exc: Exception) -> None:
+    """Print an upstream-failure message in red and exit non-zero."""
+    click.secho(f"error: {exc}", fg="red")
+    raise SystemExit(1)

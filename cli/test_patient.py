@@ -1,9 +1,9 @@
-import json
-
 import click
 
-from .common import echo_response
+from services.healthex_client import HealthExError
 from services.service_locator import ServiceLocator
+
+from .common import async_command, echo_http_error, echo_response_dict
 
 
 @click.group(name="test-patient")
@@ -15,38 +15,43 @@ def test_patient() -> None:
 @click.option("--first-name", default="Test")
 @click.option("--last-name", default="Patient")
 @click.option("--dob", default="1990-01-15", help="YYYY-MM-DD")
-def create(first_name, last_name, dob):
+@async_command
+async def create(first_name, last_name, dob):
     """Create a test patient (HealthEx auto-generates email + password)."""
-    s = ServiceLocator.get_healthex_session()
-    r = s.post(
-        f"/v1/organizations/{s.org_id()}/test-patients",
-        json={"firstName": first_name, "lastName": last_name, "dateOfBirth": dob},
-    )
-    if not r.is_success:
-        echo_response(r)
-        return
-    click.secho(
-        "Test patient created. SAVE THE PASSWORD NOW — shown only once.",
-        fg="yellow", bold=True,
-    )
-    click.echo(json.dumps(r.json(), indent=2))
+    async with ServiceLocator.healthex_client() as client:
+        try:
+            data = await client.create_test_patient(
+                first_name=first_name, last_name=last_name, date_of_birth=dob,
+            )
+        except HealthExError as exc:
+            echo_http_error(exc)
+        click.secho(
+            "Test patient created. SAVE THE PASSWORD NOW — shown only once.",
+            fg="yellow", bold=True,
+        )
+        echo_response_dict(data)
 
 
 @test_patient.command("list")
-def list_():
+@async_command
+async def list_():
     """List all test patients in our org."""
-    s = ServiceLocator.get_healthex_session()
-    r = s.get(f"/v1/organizations/{s.org_id()}/test-patients")
-    echo_response(r)
+    async with ServiceLocator.healthex_client() as client:
+        try:
+            patients = await client.list_test_patients()
+        except HealthExError as exc:
+            echo_http_error(exc)
+        echo_response_dict(patients)
 
 
 @test_patient.command()
 @click.argument("patient_id")
-def delete(patient_id):
+@async_command
+async def delete(patient_id):
     """Delete a test patient by id."""
-    s = ServiceLocator.get_healthex_session()
-    r = s.delete(f"/v1/organizations/{s.org_id()}/test-patients/{patient_id}")
-    color = "green" if r.is_success else "red"
-    click.secho(f"HTTP {r.status_code}", fg=color)
-    if r.text:
-        click.echo(r.text[:500])
+    async with ServiceLocator.healthex_client() as client:
+        try:
+            await client.delete_test_patient(patient_id)
+        except HealthExError as exc:
+            echo_http_error(exc)
+        click.secho(f"deleted {patient_id}", fg="green")

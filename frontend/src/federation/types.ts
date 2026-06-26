@@ -56,3 +56,76 @@ export interface MyChartCallbackProps extends MyChartBaseProps {
   /** Called if the token exchange fails. */
   onError?: (error: Error) => void;
 }
+
+// =============================================================================
+// HealthEx
+// =============================================================================
+
+export type HealthExStatus =
+  | "PENDING_CONSENT"
+  | "RETRIEVAL_IN_PROGRESS"
+  | "COMPLETE"
+  | "ERROR"
+  | "REVOKED";
+
+export interface HealthExLink {
+  project_id: string;
+  external_id: string;
+  healthex_patient_id: string | null;
+  status: HealthExStatus;
+  onboarding_url: string | null;
+  consented_at: string | null;
+  last_status_polled_at: string | null;
+  last_synced_at: string | null;
+  connected_at: string;
+}
+
+export interface HealthExStatusResult {
+  project_id: string;
+  healthex_patient_id: string | null;
+  status: HealthExStatus;
+  overall_status?: string | null;
+  vectorization_status?: string | null;
+  polled_at?: string | null;
+}
+
+export interface HealthExBaseProps {
+  /** Authenticated HTTP client for the fhir-importers microservice. */
+  apiClient: AxiosInstance;
+  /** Optional path prefix in front of microservice routes. Default: "". */
+  apiBasePath?: string;
+  /** Extra class applied to the module's root container. */
+  className?: string;
+}
+
+export interface ConnectHealthExProps extends HealthExBaseProps {
+  /**
+   * User's email — required by HealthEx's addPatients. The host has it from
+   * its auth context; we don't make a separate request to fetch it.
+   */
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  /**
+   * Where HealthEx should redirect the browser after consent.
+   *
+   * Appended verbatim to the patient-facing URL as `&redirectUri=<encoded>`.
+   * Must EXACTLY match a URL registered in the HealthEx project's "Redirect
+   * URLs" admin setting; otherwise the SPA logs a warning and falls through
+   * to its default close-the-tab behavior.
+   *
+   * Note: empirically, configuring Redirect URLs on the project side limits
+   * the available auth methods to CLEAR only (US-only NIST IAL2 verification).
+   * Omit this prop if your testers need Google/Microsoft sign-in.
+   */
+  redirectUri?: string;
+  /** Called once the patient has consented and patient_id is resolved. */
+  onConnected?: (link: HealthExLink) => void;
+  /** Called if connect or status polling fails. */
+  onError?: (error: Error) => void;
+}
+
+export interface HealthExConnectionsProps extends HealthExBaseProps {
+  /** Called if listing or deleting connections fails. */
+  onError?: (error: Error) => void;
+}

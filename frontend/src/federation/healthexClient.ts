@@ -1,0 +1,70 @@
+import type { AxiosInstance } from "axios";
+import type { HealthExLink, HealthExStatusResult } from "./types";
+
+export interface HealthExClient {
+  connect: (
+    email: string,
+    firstName?: string,
+    lastName?: string,
+  ) => Promise<HealthExLink>;
+  listConnections: () => Promise<HealthExLink[]>;
+  getStatus: (projectId: string) => Promise<HealthExStatusResult>;
+  deleteConnection: (projectId: string) => Promise<void>;
+}
+
+// Pull a FastAPI `{ "detail": ... }` message out of an axios error.
+function detail(e: unknown): string {
+  const err = e as { response?: { data?: { detail?: unknown } }; message?: string };
+  const d = err?.response?.data?.detail;
+  if (d) return String(d);
+  return err?.message ?? String(e);
+}
+
+export function createHealthExClient(
+  apiClient: AxiosInstance,
+  apiBasePath = "",
+): HealthExClient {
+  const base = apiBasePath.replace(/\/+$/, "");
+
+  async function get<T>(path: string): Promise<T> {
+    try {
+      const res = await apiClient.get<T>(`${base}${path}`);
+      return res.data;
+    } catch (e) {
+      throw new Error(detail(e));
+    }
+  }
+
+  async function post<T>(path: string, body: unknown): Promise<T> {
+    try {
+      const res = await apiClient.post<T>(`${base}${path}`, body);
+      return res.data;
+    } catch (e) {
+      throw new Error(detail(e));
+    }
+  }
+
+  async function del(path: string): Promise<void> {
+    try {
+      await apiClient.delete(`${base}${path}`);
+    } catch (e) {
+      throw new Error(detail(e));
+    }
+  }
+
+  return {
+    connect: (email, firstName, lastName) =>
+      post<HealthExLink>("/healthex/connect", {
+        email,
+        first_name: firstName,
+        last_name: lastName,
+      }),
+    listConnections: () => get<HealthExLink[]>("/healthex/connections"),
+    getStatus: (projectId) =>
+      get<HealthExStatusResult>(
+        `/healthex/connections/${encodeURIComponent(projectId)}/status`,
+      ),
+    deleteConnection: (projectId) =>
+      del(`/healthex/connections/${encodeURIComponent(projectId)}`),
+  };
+}

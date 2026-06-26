@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, UniqueConstraint
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, UniqueConstraint
 from sqlmodel import Field, SQLModel
 
 
@@ -68,3 +68,36 @@ class HealthExLink(SQLModel, table=True):
     )
     created_at: datetime = Field(sa_column=_tz_column())
     updated_at: datetime = Field(sa_column=_tz_column())
+
+
+class PushedResource(SQLModel, table=True):
+    """Idempotency ledger of FHIR resources pushed to ctomop, per connection.
+
+    MVP workaround — see healthkey-etl/docs/ctomop-integration.md → Idempotency.
+    """
+
+    __tablename__ = "pushed_resources"
+    __table_args__ = (
+        UniqueConstraint(
+            "connection_id",
+            "fhir_resource_type",
+            "fhir_resource_id",
+            name="uq_pushed_resources_conn_resource",
+        ),
+    )
+
+    id: int | None = Field(default=None, primary_key=True)
+    connection_id: int = Field(
+        sa_column=Column(
+            Integer,
+            ForeignKey("mychart_connections.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
+        ),
+    )
+    fhir_resource_type: str
+    fhir_resource_id: str
+    ctomop_endpoint: str
+    ctomop_row_id: int
+    content_hash: str  # recorded for future PATCH support; not enforced in MVP
+    pushed_at: datetime = Field(sa_column=_tz_column())

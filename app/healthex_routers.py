@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 from .auth import get_current_user_uid
-from services.healthex_client import BaseHealthExClient, HealthExError
+from services.healthex_client import HealthExClient, HealthExError
 from .healthex_links import (
     STATUS_COMPLETE,
     STATUS_ERROR,
@@ -15,6 +15,7 @@ from .healthex_links import (
     HealthExLinksRepository,
 )
 from .schemas import (
+    HealthExConnectRequest,
     HealthExLinkResponse,
     HealthExStatusResponse,
 )
@@ -23,7 +24,7 @@ from .schemas import (
 _logger = logging.getLogger(__name__)
 
 
-def get_healthex_client(request: Request) -> BaseHealthExClient:
+def get_healthex_client(request: Request) -> HealthExClient:
     return request.app.state.healthex_client
 
 
@@ -58,9 +59,10 @@ async def list_connections(
 
 @router.post("/connect", response_model=HealthExLinkResponse)
 async def connect(
+    body: HealthExConnectRequest,
     uid: str = Depends(get_current_user_uid),
     repo: BaseHealthExLinksRepository = Depends(get_healthex_links_repo),
-    client: BaseHealthExClient = Depends(get_healthex_client),
+    client: HealthExClient = Depends(get_healthex_client),
     project_id: str = Depends(get_healthex_project_id),
 ) -> HealthExLinkResponse:
     # Idempotent: re-issuing the link mints a fresh signature each call, so
@@ -68,12 +70,20 @@ async def connect(
     if existing := await repo.get(uid, project_id):
         return _to_response(existing)
 
+    # addPatients creates the Recruitment record HealthEx requires before the
+    # Unique Link binds at consent time; without it the patient-side
+    # link-identified-patient step returns 404 (empirically verified).
     try:
-        onboarding_url = await client.get_unique_link(
-            project_id=project_id, external_id=uid,
+        await client.add_patient(
+            external_id=uid,
+            email=body.email,
+            first_name=body.first_name or "User",
+            last_name=body.last_name or "Account",
+            suppress_notifications=True,
         )
+        onboarding_url = await client.get_unique_link(external_id=uid)
     except HealthExError as exc:
-        _logger.exception("HealthEx get_unique_link failed for uid=%s", uid)
+        _logger.exception("HealthEx connect failed for uid=%s", uid)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"HealthEx upstream error: {exc}",
@@ -113,7 +123,7 @@ async def poll_status(
     project_id: str,
     uid: str = Depends(get_current_user_uid),
     repo: BaseHealthExLinksRepository = Depends(get_healthex_links_repo),
-    client: BaseHealthExClient = Depends(get_healthex_client),
+    client: HealthExClient = Depends(get_healthex_client),
 ) -> HealthExStatusResponse:
     link = await repo.get(uid, project_id)
     if link is None:
@@ -129,7 +139,7 @@ async def poll_status(
     if link.healthex_patient_id is None:
         try:
             patient_id = await client.find_patient_id_by_external_id(
-                project_id=project_id, external_id=link.external_id,
+                link.external_id,
             )
         except HealthExError as exc:
             _logger.exception("HealthEx lookup failed uid=%s", uid)
@@ -157,7 +167,7 @@ async def poll_status(
     # Phase 2: patient is consented — poll the data-retrieval pipeline.
     try:
         upstream = await client.get_data_retrieval_status(
-            project_id=project_id, patient_id=link.healthex_patient_id,
+            link.healthex_patient_id,
         )
     except HealthExError as exc:
         _logger.exception(

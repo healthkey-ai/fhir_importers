@@ -42,20 +42,18 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # Ephemeral on purpose: no volume mount = every `docker compose up` starts
+  # fresh, no stale schema vs alembic-version drift carrying across sessions.
+  # Run `alembic upgrade head` on each fresh boot.
   postgres:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: fhir_importers
       POSTGRES_USER: fhir
       POSTGRES_PASSWORD: fhir_dev_only
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U fhir -d fhir_importers"]
       interval: 5s
       timeout: 3s
       retries: 5
     restart: unless-stopped
-
-volumes:
-  postgres_data:

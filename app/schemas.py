@@ -45,6 +45,12 @@ class SyncConnectionResponse(BaseModel):
     dag_run_id: str
 
 
+class HealthExConnectRequest(BaseModel):
+    email: str = Field(..., description="User's email — required by HealthEx addPatients")
+    first_name: str | None = None
+    last_name: str | None = None
+
+
 class HealthExLinkResponse(BaseModel):
     project_id: str
     external_id: str

@@ -21,6 +21,8 @@ export default defineConfig({
         "./ConnectMyChart": "./src/federation/ConnectMyChart.tsx",
         "./MyChartCallback": "./src/federation/MyChartCallback.tsx",
         "./MyChartConnections": "./src/federation/MyChartConnections.tsx",
+        "./ConnectHealthEx": "./src/federation/ConnectHealthEx.tsx",
+        "./HealthExConnections": "./src/federation/HealthExConnections.tsx",
         "./types": "./src/federation/types.ts",
       },
       shared: {
