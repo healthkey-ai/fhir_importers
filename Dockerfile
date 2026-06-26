@@ -27,6 +27,8 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY app/ ./app/
+COPY services/ ./services/
+COPY cli/ ./cli/
 COPY alembic/ ./alembic/
 COPY alembic.ini ./alembic.ini
 COPY organizations.json ./organizations.json
