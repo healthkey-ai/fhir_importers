@@ -104,24 +104,24 @@ jobs:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
           GCP_KEY_FILE: ${{ secrets.GCP_KEY_FILE }}
         run: |
+          cat > /tmp/deploy-remote.sh <<'SCRIPT'
+          set -e
+          cd "$DEPLOY_PATH"
+          gcloud auth activate-service-account --key-file="$GCP_KEY_FILE"
+          gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+          # Persist IMAGE_TAG so any subsequent compose call on the host (CI or
+          # interactive) pins the same image, not the empty string.
+          echo "IMAGE_TAG=${IMAGE_TAG}" > .env.image
+          export IMAGE_TAG
+          echo "Rolling out IMAGE_TAG=${IMAGE_TAG}"
+          docker compose --env-file .env.image pull
+          docker compose --env-file .env.image run --rm app alembic upgrade head
+          docker compose --env-file .env.image up -d --force-recreate --remove-orphans
+          docker compose --env-file .env.image ps
+          SCRIPT
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa "$SSH_USER@$SSH_HOST" \
-            IMAGE_TAG="${GITHUB_SHA}" GCP_REGION="${GCP_REGION}" \
-            DEPLOY_PATH="$DEPLOY_PATH" GCP_KEY_FILE="$GCP_KEY_FILE" \
-            bash -se <<'EOF'
-            set -e
-            cd "$DEPLOY_PATH"
-            gcloud auth activate-service-account --key-file="$GCP_KEY_FILE"
-            gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
-            # Persist IMAGE_TAG so any subsequent compose call on the host (CI or
-            # interactive) pins the same image, not the empty string.
-            echo "IMAGE_TAG=${IMAGE_TAG}" > .env.image
-            export IMAGE_TAG
-            echo "Rolling out IMAGE_TAG=${IMAGE_TAG}"
-            docker compose --env-file .env.image pull
-            docker compose --env-file .env.image run --rm app alembic upgrade head
-            docker compose --env-file .env.image up -d --force-recreate --remove-orphans
-            docker compose --env-file .env.image ps
-EOF
+            "IMAGE_TAG='${GITHUB_SHA}' GCP_REGION='${GCP_REGION}' DEPLOY_PATH='${DEPLOY_PATH}' GCP_KEY_FILE='${GCP_KEY_FILE}' bash -s" \
+            < /tmp/deploy-remote.sh
 
   smoke:
     name: Smoke
