@@ -112,13 +112,21 @@ jobs:
           export IMAGE_TAG
           echo "Rolling out IMAGE_TAG=${IMAGE_TAG}"
           docker compose pull
-          docker compose run --rm app alembic upgrade head
-          docker compose up -d --force-recreate --remove-orphans
+          # `-T` + </dev/null so `docker compose run` cannot consume the script's
+          # stdin (it inherits the parent shell's stdin by default — when bash is
+          # reading the script over ssh stdin, the docker subprocess steals the
+          # remaining commands and bash silently exits with status 0).
+          docker compose run --rm -T app alembic upgrade head </dev/null
+          docker compose up -d --force-recreate --remove-orphans </dev/null
           docker compose ps
           SCRIPT
+          # Copy the script to the host and execute via a fresh ssh session.
+          # Avoids piping the script over ssh stdin, which otherwise gets eaten
+          # by `docker compose run` mid-execution.
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
+            /tmp/deploy-remote.sh "$SSH_USER@$SSH_HOST:/tmp/deploy-remote.sh"
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa "$SSH_USER@$SSH_HOST" \
-            "IMAGE_TAG='${GITHUB_SHA}' GCP_REGION='${GCP_REGION}' DEPLOY_PATH='${DEPLOY_PATH}' GCP_KEY_FILE='${GCP_KEY_FILE}' bash -s" \
-            < /tmp/deploy-remote.sh
+            "IMAGE_TAG='${GITHUB_SHA}' GCP_REGION='${GCP_REGION}' DEPLOY_PATH='${DEPLOY_PATH}' GCP_KEY_FILE='${GCP_KEY_FILE}' bash /tmp/deploy-remote.sh"
 
   smoke:
     name: Smoke
