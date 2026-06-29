@@ -1,4 +1,5 @@
 import abc
+import logging
 import os
 
 import firebase_admin
@@ -7,6 +8,9 @@ from firebase_admin import auth as firebase_auth
 from firebase_admin import credentials
 
 from .config import get_settings
+
+
+_logger = logging.getLogger(__name__)
 
 
 class BaseTokenVerifier(abc.ABC):
@@ -49,10 +53,33 @@ class FirebaseTokenVerifier(BaseTokenVerifier):
         self._ensure_firebase_app()
         try:
             decoded = firebase_auth.verify_id_token(token, check_revoked=False)
-        except Exception:
+        except firebase_auth.ExpiredIdTokenError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired token",
+                detail="Expired token",
+            )
+        except firebase_auth.RevokedIdTokenError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Revoked token",
+            )
+        except firebase_auth.InvalidIdTokenError as exc:
+            # Bad signature, project-id/audience mismatch, malformed JWT, etc.
+            # Log so configuration drift (e.g. wrong FIREBASE_PROJECT_ID) is
+            # visible rather than masquerading as "invalid token from client."
+            _logger.warning("Firebase token invalid: %s", exc)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token",
+            )
+        except Exception:
+            # Network errors fetching JWKS, firebase_admin init issues, etc.
+            # These are server-side problems; surface as 503 with a log so they
+            # don't get diagnosed as a client auth failure.
+            _logger.exception("Firebase token verification failed unexpectedly")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Auth verification unavailable",
             )
         uid = decoded.get("uid")
         if not uid:

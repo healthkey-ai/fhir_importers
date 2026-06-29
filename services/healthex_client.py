@@ -142,9 +142,19 @@ class HealthExClient:
             )
         except httpx.HTTPError as exc:
             raise HealthExError(f"GET {url}: {exc}") from exc
-        # 400 "Patient not found for provided externalId" is HealthEx's signal
-        # that no patient row exists yet for this externalId — treat as pending.
-        if r.status_code == 400 and "Patient not found" in r.text:
+        # HealthEx signals "no patient row for this externalId yet" with a 400
+        # whose body is a short message. Treat any 400 with a short text body as
+        # pending-consent — vendor wording has changed before. Log if the
+        # message doesn't contain "patient not found" so a real vendor breakage
+        # (different error type behind the same status) is observable instead
+        # of silently coerced to None.
+        if r.status_code == 400 and len(r.text) < 256:
+            if "patient not found" not in r.text.lower():
+                _logger.warning(
+                    "HealthEx getPatientConsents 400 with unfamiliar body "
+                    "(treating as pending): %s",
+                    r.text[:200],
+                )
             return None
         if r.status_code >= 400:
             raise HealthExError(f"GET {url} returned {r.status_code}: {r.text[:200]}")

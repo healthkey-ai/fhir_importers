@@ -17,12 +17,20 @@ function ConnectHealthExInner({
 
   // Hydrate existing link on mount so a returning user doesn't get a fresh
   // onboarding URL; /connect is idempotent server-side but checking listings
-  // first avoids a roundtrip mint.
+  // first avoids a roundtrip mint. Pick deterministically: HealthEx supports
+  // multiple projects per user (keyed on (user_uid, project_id)), so the
+  // server response order is not load-bearing. Until this component takes a
+  // projectId prop, prefer the oldest connection (lowest connected_at), which
+  // matches "the link the user has been working with".
   useEffect(() => {
     client
       .listConnections()
       .then((conns) => {
-        if (conns.length > 0) setLink(conns[0]);
+        if (conns.length === 0) return;
+        const oldest = [...conns].sort((a, b) =>
+          a.connected_at.localeCompare(b.connected_at),
+        )[0];
+        setLink(oldest);
       })
       .catch(() => {
         // Silent — the Connect button works regardless; first interaction

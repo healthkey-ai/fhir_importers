@@ -38,13 +38,9 @@ services:
       postgres: { condition: service_healthy }
       firebase-auth: { condition: service_started }
 
-  # One-shot. Invoke during deploy with `docker compose run --rm migrate`.
-  migrate:
-    <<: *app-common
-    command: [ "alembic", "upgrade", "head" ]
-    restart: "no"
-    depends_on:
-      postgres: { condition: service_healthy }
+  # Migrations are invoked via the `app` service image during deploy:
+  #   docker compose run --rm -T app alembic upgrade head </dev/null
+  # See .github/workflows/deploy.yml.
 
   redis:
     image: redis:8.0.2-bookworm

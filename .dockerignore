@@ -24,3 +24,11 @@ frontend/dist-remote/
 # Vendored reference repos — not used in the image, but huge.
 examples/
 LOCAL_DEV.md
+# Tests aren't run from the image; excluding keeps the layer small.
+tests/
+# Frontend dotenvs would otherwise enter the build context and be readable
+# inside the build stage. Never copied into the final image, but Cloud Build
+# uploads the whole context to Google before the build runs.
+frontend/.env
+frontend/.env.*
+!frontend/.env.example

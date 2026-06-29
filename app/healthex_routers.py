@@ -152,7 +152,11 @@ async def poll_status(
                 user_uid=uid, project_id=project_id,
                 status=STATUS_PENDING_CONSENT, polled_at=now,
             )
-            assert updated is not None
+            if updated is None:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="HealthEx link mutated mid-poll",
+                )
             return HealthExStatusResponse(
                 project_id=project_id, healthex_patient_id=None,
                 status=updated.status, polled_at=now,
@@ -162,7 +166,11 @@ async def poll_status(
             status=STATUS_RETRIEVAL_IN_PROGRESS,
             healthex_patient_id=patient_id, polled_at=now, consented_at=now,
         )
-        assert link is not None
+        if link is None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="HealthEx link mutated mid-poll",
+            )
 
     # Phase 2: patient is consented — poll the data-retrieval pipeline.
     try:
@@ -184,7 +192,11 @@ async def poll_status(
         user_uid=uid, project_id=project_id,
         status=new_status, polled_at=now,
     )
-    assert updated is not None
+    if updated is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="HealthEx link mutated mid-poll",
+        )
     return HealthExStatusResponse(
         project_id=project_id,
         healthex_patient_id=updated.healthex_patient_id,
