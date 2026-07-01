@@ -27,6 +27,11 @@ x-app-common: &app-common
     # Deploy workflow sets SENTRY_RELEASE=$IMAGE_TAG so events tag the commit.
     - SENTRY_RELEASE=${IMAGE_TAG:-}
     - SENTRY_TRACES_SAMPLE_RATE
+    # Airflow — used by POST /epic/connections/{alias}/sync and
+    # POST /healthex/connections/{project_id}/ingest to trigger DAGs.
+    - AIRFLOW_URL
+    - AIRFLOW_USERNAME
+    - AIRFLOW_PASSWORD
   volumes:
     - /data/credentials/epic_staging.key:/credentials/epic_staging.key:ro
     - /data/credentials/epic_prod.key:/credentials/epic_prod.key:ro
