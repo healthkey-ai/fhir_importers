@@ -147,6 +147,7 @@ class HealthExLinksRepository(BaseHealthExLinksRepository):
         healthex_patient_id: str | None = None,
         polled_at: datetime | None = None,
         consented_at: datetime | None = None,
+        synced_at: datetime | None = None,
     ) -> HealthExLinkMetadata | None:
         link = await self._fetch(user_uid, project_id)
         if link is None:
