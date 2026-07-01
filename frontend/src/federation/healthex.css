@@ -132,3 +132,39 @@
 .healthex-root .healthex-disconnect:hover:not(:disabled) {
   background: #fff5f5;
 }
+
+.healthex-root .healthex-connection-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.healthex-root .healthex-refresh {
+  margin: 0;
+  min-width: auto;
+  padding: 0.4rem 0.8rem;
+  background: white;
+  color: #2c5282;
+  border-color: #63b3ed;
+}
+
+.healthex-root .healthex-refresh:hover:not(:disabled) {
+  background: #ebf8ff;
+}
+
+.healthex-root .healthex-refresh-result {
+  grid-column: 1 / -1;
+  margin-top: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  background: #f7fafc;
+  border-left: 3px solid #63b3ed;
+  border-radius: 0.25rem;
+  font-size: 0.85rem;
+  color: #2d3748;
+}
+
+.healthex-root .healthex-refresh-result ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1.2rem;
+  font-size: 0.8rem;
+  color: #4a5568;
+}

@@ -1,5 +1,9 @@
 import type { AxiosInstance } from "axios";
-import type { HealthExLink, HealthExStatusResult } from "./types";
+import type {
+  HealthExLink,
+  HealthExRefreshResult,
+  HealthExStatusResult,
+} from "./types";
 
 export interface HealthExClient {
   connect: (
@@ -9,6 +13,7 @@ export interface HealthExClient {
   ) => Promise<HealthExLink>;
   listConnections: () => Promise<HealthExLink[]>;
   getStatus: (projectId: string) => Promise<HealthExStatusResult>;
+  refresh: (projectId: string) => Promise<HealthExRefreshResult>;
   deleteConnection: (projectId: string) => Promise<void>;
 }
 
@@ -63,6 +68,11 @@ export function createHealthExClient(
     getStatus: (projectId) =>
       get<HealthExStatusResult>(
         `/healthex/connections/${encodeURIComponent(projectId)}/status`,
+      ),
+    refresh: (projectId) =>
+      post<HealthExRefreshResult>(
+        `/healthex/connections/${encodeURIComponent(projectId)}/refresh`,
+        {},
       ),
     deleteConnection: (projectId) =>
       del(`/healthex/connections/${encodeURIComponent(projectId)}`),

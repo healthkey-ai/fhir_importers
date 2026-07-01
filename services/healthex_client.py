@@ -223,21 +223,135 @@ class HealthExClient:
 
     async def pull_everything(
         self, patient_id: str, *, since: str | None = None,
+        max_pages: int = 50,
     ) -> dict:
-        """GET /FHIR/R4/Person/{patient_id}/$everything → Bundle dict."""
-        url = f"{self._base}/FHIR/R4/Person/{patient_id}/$everything"
-        params = {"_since": since} if since else None
+        """GET /FHIR/R4/Person/{patient_id}/$everything → Bundle dict.
+
+        Follows FHIR pagination via `Bundle.link[relation="next"]` per
+        https://www.hl7.org/fhir/http.html#paging. All pages' entries are
+        merged into a single returned Bundle; per-page timing, size, and
+        entry counts are logged at INFO. `max_pages` is a safety net — we
+        haven't seen HealthEx paginate in practice, but a runaway follow-
+        loop would be worse than a truncated fetch.
+
+        Heavy logging is intentional while we learn `$everything` semantics
+        empirically (HealthEx docs don't specify whether a 200 body means
+        retrieval is complete or can return partials mid-retrieval — the
+        response is what we compare against on subsequent pulls).
+        """
+        start_ts = time.time()
+        first_url = f"{self._base}/FHIR/R4/Person/{patient_id}/$everything"
+        params: dict | None = {"_since": since} if since else None
         headers = (await self._auth_headers_json()) | {"Accept": "application/fhir+json"}
-        try:
-            r = await self._http.get(url, params=params, headers=headers)
-        except httpx.HTTPError as exc:
-            raise HealthExError(f"GET {url}: {exc}") from exc
-        if r.status_code >= 400:
-            raise HealthExError(f"GET {url} returned {r.status_code}: {r.text[:200]}")
-        try:
-            return r.json()
-        except ValueError as exc:
-            raise HealthExError(f"GET {url} returned non-JSON body") from exc
+
+        _logger.info(
+            "healthex.pull_everything.start patient=%s since=%s url=%s",
+            patient_id, since or "-", first_url,
+        )
+
+        merged_entries: list = []
+        page_stats: list[tuple[int, int, int]] = []  # (page_idx, entries, bytes)
+        page_url: str | None = first_url
+        page_params: dict | None = params
+        first_bundle: dict | None = None
+
+        for page_idx in range(max_pages):
+            page_start = time.time()
+            try:
+                r = await self._http.get(
+                    page_url, params=page_params, headers=headers,
+                )
+            except httpx.HTTPError as exc:
+                _logger.exception(
+                    "healthex.pull_everything.http_error page=%s url=%s",
+                    page_idx, page_url,
+                )
+                raise HealthExError(f"GET {page_url}: {exc}") from exc
+
+            elapsed_ms = int((time.time() - page_start) * 1000)
+            body_bytes = len(r.content or b"")
+            _logger.info(
+                "healthex.pull_everything.page page=%s status=%s "
+                "bytes=%s elapsed_ms=%s content_type=%s",
+                page_idx, r.status_code, body_bytes, elapsed_ms,
+                r.headers.get("content-type", "-"),
+            )
+
+            if r.status_code >= 400:
+                _logger.warning(
+                    "healthex.pull_everything.bad_status page=%s status=%s body=%s",
+                    page_idx, r.status_code, r.text[:500],
+                )
+                raise HealthExError(
+                    f"GET {page_url} returned {r.status_code}: {r.text[:200]}",
+                )
+
+            try:
+                bundle = r.json()
+            except ValueError as exc:
+                raise HealthExError(
+                    f"GET {page_url} returned non-JSON body",
+                ) from exc
+
+            entries = bundle.get("entry") or []
+            page_stats.append((page_idx, len(entries), body_bytes))
+            merged_entries.extend(entries)
+            if first_bundle is None:
+                first_bundle = bundle
+
+            # Log resource-type breakdown for this page so we can spot
+            # whether HealthEx trickles data across pages (partial retrieval
+            # mid-stream) or delivers each resource type in one go.
+            type_counts: dict[str, int] = {}
+            for e in entries:
+                rt = ((e or {}).get("resource") or {}).get("resourceType", "?")
+                type_counts[rt] = type_counts.get(rt, 0) + 1
+            _logger.info(
+                "healthex.pull_everything.page_types page=%s counts=%s",
+                page_idx, type_counts,
+            )
+
+            next_url = _next_link(bundle)
+            if not next_url:
+                break
+            _logger.info(
+                "healthex.pull_everything.follow_next page=%s next=%s",
+                page_idx, next_url,
+            )
+            page_url = next_url
+            page_params = None  # next-link URL already has params baked in.
+        else:
+            _logger.warning(
+                "healthex.pull_everything.max_pages_reached patient=%s "
+                "pages=%s — truncating; next link was still present",
+                patient_id, max_pages,
+            )
+
+        total_ms = int((time.time() - start_ts) * 1000)
+        _logger.info(
+            "healthex.pull_everything.done patient=%s pages=%s "
+            "total_entries=%s total_ms=%s",
+            patient_id, len(page_stats), len(merged_entries), total_ms,
+        )
+
+        # Return a single Bundle: keep the first bundle's top-level fields
+        # (id, meta, type, timestamp) and swap in the merged entry list.
+        # Drop pagination `link` array since it applied to the first page only.
+        result = dict(first_bundle or {"resourceType": "Bundle", "type": "searchset"})
+        result["entry"] = merged_entries
+        result.pop("link", None)
+        # Attach a private diagnostic field so callers can surface counts
+        # without re-scanning entries. Underscore-prefixed to signal it's
+        # non-FHIR metadata added by us.
+        result["_healthkey_pull_stats"] = {
+            "pages": len(page_stats),
+            "total_entries": len(merged_entries),
+            "total_bytes": sum(b for _, _, b in page_stats),
+            "duration_ms": total_ms,
+            "since": since,
+            "truncated": len(page_stats) >= max_pages,
+        }
+        return result
 
     async def get_capability_statement(self) -> dict:
         """GET /FHIR/R4/metadata → CapabilityStatement dict."""
@@ -366,6 +480,20 @@ class HealthExClient:
             return r.json()
         except ValueError as exc:
             raise HealthExError(f"POST {url} returned non-JSON body") from exc
+
+
+def _next_link(bundle: dict) -> str | None:
+    """Return the next-page URL from a FHIR Bundle's `link` array, if any.
+
+    Per https://www.hl7.org/fhir/http.html#paging the pagination link uses
+    relation `next` and carries the absolute URL to the next page (including
+    any bookmark params); callers should hit it directly without re-adding
+    query params.
+    """
+    for entry in (bundle.get("link") or []):
+        if (entry or {}).get("relation") == "next" and entry.get("url"):
+            return entry["url"]
+    return None
 
 
 def _decode_jwt(token: str) -> dict:

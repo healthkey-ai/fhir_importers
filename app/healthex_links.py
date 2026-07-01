@@ -67,6 +67,7 @@ class BaseHealthExLinksRepository(abc.ABC):
         healthex_patient_id: str | None = None,
         polled_at: datetime | None = None,
         consented_at: datetime | None = None,
+        synced_at: datetime | None = None,
     ) -> HealthExLinkMetadata | None: ...
 
 
@@ -157,6 +158,8 @@ class HealthExLinksRepository(BaseHealthExLinksRepository):
             link.last_status_polled_at = polled_at
         if consented_at is not None and link.consented_at is None:
             link.consented_at = consented_at
+        if synced_at is not None:
+            link.last_synced_at = synced_at
         link.updated_at = datetime.now(timezone.utc)
         await self._session.commit()
         await self._session.refresh(link)

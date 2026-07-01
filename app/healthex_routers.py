@@ -17,6 +17,7 @@ from .healthex_links import (
 from .schemas import (
     HealthExConnectRequest,
     HealthExLinkResponse,
+    HealthExRefreshResponse,
     HealthExStatusResponse,
 )
 
@@ -213,6 +214,101 @@ async def poll_status(
             upstream.vectorization_status if upstream is not None else None
         ),
         polled_at=now,
+    )
+
+
+@router.post(
+    "/connections/{project_id}/refresh",
+    response_model=HealthExRefreshResponse,
+)
+async def refresh_connection(
+    project_id: str,
+    uid: str = Depends(get_current_user_uid),
+    repo: BaseHealthExLinksRepository = Depends(get_healthex_links_repo),
+    client: HealthExClient = Depends(get_healthex_client),
+) -> HealthExRefreshResponse:
+    """Manually pull the patient's FHIR bundle from HealthEx.
+
+    In-process for now — no Airflow DAG involved. Once the healthkey-etl
+    HealthEx extract DAG exists (see /home/nick/PycharmProjects/healthkey-etl/healthex.md),
+    this endpoint will trigger it instead and return `dag_run_id` for the
+    UI to poll. Right now the goal is experimental: verify we can pull,
+    learn `$everything` semantics from the logs (page count, resource
+    breakdown, timing), and give the operator a manual "kick" button.
+
+    Response is a compact summary; full per-page and per-resource-type
+    breakdowns are in the backend logs (search for
+    `healthex.pull_everything.*`).
+    """
+    link = await repo.get(uid, project_id)
+    if link is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No HealthEx link for project: {project_id}",
+        )
+    if link.healthex_patient_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "HealthEx has not resolved a patientId yet — consent is "
+                "still pending. Wait for the status poll to advance to "
+                "RETRIEVAL_IN_PROGRESS before refreshing."
+            ),
+        )
+
+    # Pass `since=last_synced_at` so subsequent refreshes only ask HealthEx
+    # for records touched after the last successful pull. HealthEx's own
+    # docs note `_since` is best-effort (not guaranteed minimal delta), so
+    # the caller-side dedup ledger — TODO — must still run before OMOP
+    # ingestion. For now (no ingestion), an occasional re-fetch is harmless.
+    since_iso = link.last_synced_at.isoformat() if link.last_synced_at else None
+
+    try:
+        bundle = await client.pull_everything(
+            link.healthex_patient_id, since=since_iso,
+        )
+    except HealthExError as exc:
+        _logger.exception(
+            "HealthEx refresh failed uid=%s patient=%s",
+            uid, link.healthex_patient_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"HealthEx upstream error: {exc}",
+        ) from exc
+
+    entries = bundle.get("entry") or []
+    type_counts: dict[str, int] = {}
+    for e in entries:
+        rt = ((e or {}).get("resource") or {}).get("resourceType", "?")
+        type_counts[rt] = type_counts.get(rt, 0) + 1
+    stats = bundle.get("_healthkey_pull_stats") or {}
+
+    now = datetime.now(timezone.utc)
+    # Even the first successful pull leaves the row in RETRIEVAL_IN_PROGRESS
+    # rather than COMPLETE: we don't yet ingest to OMOP, and marking
+    # COMPLETE would mislead future callers. Update last_synced_at so the
+    # next refresh uses it as `_since`, but keep status the same.
+    await repo.update_status(
+        user_uid=uid, project_id=project_id,
+        status=link.status, synced_at=now,
+    )
+
+    _logger.info(
+        "healthex.refresh.done uid=%s patient=%s entries=%s types=%s "
+        "pages=%s duration_ms=%s since=%s",
+        uid, link.healthex_patient_id, len(entries), type_counts,
+        stats.get("pages"), stats.get("duration_ms"), since_iso or "-",
+    )
+    return HealthExRefreshResponse(
+        project_id=project_id,
+        healthex_patient_id=link.healthex_patient_id,
+        total_entries=len(entries),
+        pages=int(stats.get("pages", 1)),
+        duration_ms=int(stats.get("duration_ms", 0)),
+        resource_type_counts=type_counts,
+        truncated=bool(stats.get("truncated", False)),
+        synced_at=now,
     )
 
 
