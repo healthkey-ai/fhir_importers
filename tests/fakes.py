@@ -7,6 +7,7 @@ from app.airflow import AirflowDagRunState, AirflowError, BaseAirflowClient
 from app.auth import BaseTokenVerifier
 from app.client import BaseEpicClient, EpicTokens, SmartConfiguration
 from app.connections import BaseConnectionsRepository, ConnectionMetadata
+from app.healthex_links import BaseHealthExLinksRepository, HealthExLinkMetadata
 from app.state_store import BaseStateStore, PendingState
 
 
@@ -130,6 +131,102 @@ class StaticTokenVerifier(BaseTokenVerifier):
                 detail="Invalid or expired token",
             )
         return self._uid
+
+
+class InMemoryHealthExLinksRepository(BaseHealthExLinksRepository):
+    """In-memory implementation of BaseHealthExLinksRepository for tests.
+
+    Behaviour mirrors the SQLModel-backed repo — same field semantics,
+    same None-return conventions — so anything that passes here should
+    behave identically against Postgres. Tests should exercise this fake
+    through the abstract base type, not the concrete class, so a future
+    signature drift on the base breaks the tests loudly (mypy / attribute
+    error) rather than silently.
+    """
+
+    def __init__(self) -> None:
+        self._store: dict[tuple[str, str], HealthExLinkMetadata] = {}
+
+    async def upsert(
+        self,
+        *,
+        user_uid: str,
+        project_id: str,
+        external_id: str,
+        healthex_patient_id: str | None,
+        status: str,
+        onboarding_url: str | None,
+    ) -> HealthExLinkMetadata:
+        key = (user_uid, project_id)
+        now = datetime.now(timezone.utc)
+        prior = self._store.get(key)
+        meta = HealthExLinkMetadata(
+            project_id=project_id,
+            external_id=external_id,
+            healthex_patient_id=healthex_patient_id,
+            status=status,
+            onboarding_url=onboarding_url,
+            consented_at=prior.consented_at if prior else None,
+            last_status_polled_at=prior.last_status_polled_at if prior else None,
+            last_synced_at=prior.last_synced_at if prior else None,
+            connected_at=prior.connected_at if prior else now,
+        )
+        self._store[key] = meta
+        return meta
+
+    async def get(
+        self, user_uid: str, project_id: str,
+    ) -> HealthExLinkMetadata | None:
+        return self._store.get((user_uid, project_id))
+
+    async def list_for_user(self, user_uid: str) -> list[HealthExLinkMetadata]:
+        return [v for k, v in self._store.items() if k[0] == user_uid]
+
+    async def delete(self, user_uid: str, project_id: str) -> bool:
+        key = (user_uid, project_id)
+        if key not in self._store:
+            return False
+        del self._store[key]
+        return True
+
+    async def update_status(
+        self,
+        *,
+        user_uid: str,
+        project_id: str,
+        status: str,
+        healthex_patient_id: str | None = None,
+        polled_at: datetime | None = None,
+        consented_at: datetime | None = None,
+        synced_at: datetime | None = None,
+    ) -> HealthExLinkMetadata | None:
+        key = (user_uid, project_id)
+        prior = self._store.get(key)
+        if prior is None:
+            return None
+        updated = HealthExLinkMetadata(
+            project_id=prior.project_id,
+            external_id=prior.external_id,
+            healthex_patient_id=(
+                healthex_patient_id if healthex_patient_id is not None
+                else prior.healthex_patient_id
+            ),
+            status=status,
+            onboarding_url=prior.onboarding_url,
+            consented_at=(
+                consented_at if consented_at is not None and prior.consented_at is None
+                else prior.consented_at
+            ),
+            last_status_polled_at=(
+                polled_at if polled_at is not None else prior.last_status_polled_at
+            ),
+            last_synced_at=(
+                synced_at if synced_at is not None else prior.last_synced_at
+            ),
+            connected_at=prior.connected_at,
+        )
+        self._store[key] = updated
+        return updated
 
 
 class FakeAirflowClient(BaseAirflowClient):
