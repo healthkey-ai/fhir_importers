@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
-from .airflow import BaseAirflowClient
+from .airflow import AirflowError, BaseAirflowClient
 from .auth import get_current_user_uid
 from services.healthex_client import HealthExClient, HealthExError
 from .healthex_links import (
@@ -29,6 +29,27 @@ HEALTHEX_EXTRACT_DAG = "healthex_extract"
 
 def get_airflow_client(request: Request) -> BaseAirflowClient:
     return request.app.state.airflow_client
+
+
+def _dag_run_prefix(uid: str, project_id: str) -> str:
+    return f"{uid}__{project_id}"
+
+
+def _dag_conf(
+    uid: str,
+    project_id: str,
+    external_id: str,
+    healthex_patient_id: str,
+    since_iso: str | None,
+) -> dict:
+    return {
+        "user_uid": uid,
+        "project_id": project_id,
+        "healthex_patient_id": healthex_patient_id,
+        "external_id": external_id,
+        "sync_mode": "incremental" if since_iso else "initial",
+        "since": since_iso,
+    }
 
 
 _logger = logging.getLogger(__name__)
@@ -266,28 +287,30 @@ async def ingest_connection(
         )
 
     since_iso = link.last_synced_at.isoformat() if link.last_synced_at else None
-    conf = {
-        "user_uid": uid,
-        "project_id": project_id,
-        "healthex_patient_id": link.healthex_patient_id,
-        "external_id": link.external_id,
-        "sync_mode": "incremental" if since_iso else "initial",
-        "since": since_iso,
-    }
+    conf = _dag_conf(
+        uid=uid,
+        project_id=project_id,
+        external_id=link.external_id,
+        healthex_patient_id=link.healthex_patient_id,
+        since_iso=since_iso,
+    )
     try:
         dag_run_id = await airflow.create_dag_run(
             dag=HEALTHEX_EXTRACT_DAG,
-            dag_run_prefix=f"{uid}__{project_id}",
+            dag_run_prefix=_dag_run_prefix(uid, project_id),
             conf=conf,
         )
-    except Exception as exc:
+    except AirflowError as exc:
+        # Log the full URL/method for ops (goes to Sentry / stdout), but
+        # respond with a generic message so the browser doesn't see the
+        # internal Airflow URL.
         _logger.exception(
             "Failed to trigger %s DAG uid=%s project=%s",
             HEALTHEX_EXTRACT_DAG, uid, project_id,
         )
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Airflow trigger failed: {exc}",
+            detail="Airflow trigger failed",
         ) from exc
 
     _logger.info(
