@@ -4,3 +4,15 @@ __pycache__/
 venv/
 .idea/
 docker-compose.override.yml
+
+# Local scratch — never commit these. `test_user` holds a HealthEx
+# test-patient password; `claude*.sh`, `.claude/`, `main.py`, `epic.py`
+# and `pull_patient.py`-style scratches are operator playgrounds that
+# should never ship with the image.
+.claude/
+claude.sh
+claude_debug.sh
+test_user
+# Repo-root scratch scripts (kept out of Docker via .dockerignore too).
+/main.py
+/epic.py
