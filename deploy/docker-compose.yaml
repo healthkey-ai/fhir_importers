@@ -22,6 +22,11 @@ x-app-common: &app-common
     - FIREBASE_AUTH_EMULATOR_HOST=firebase-auth:9099
     - STAGING_PRIVATE_KEY_PATH=/credentials/epic_staging.key
     - PROD_PRIVATE_KEY_PATH=/credentials/epic_prod.key
+    - SENTRY_DSN
+    - SENTRY_ENVIRONMENT
+    # Deploy workflow sets SENTRY_RELEASE=$IMAGE_TAG so events tag the commit.
+    - SENTRY_RELEASE=${IMAGE_TAG:-}
+    - SENTRY_TRACES_SAMPLE_RATE
   volumes:
     - /data/credentials/epic_staging.key:/credentials/epic_staging.key:ro
     - /data/credentials/epic_prod.key:/credentials/epic_prod.key:ro

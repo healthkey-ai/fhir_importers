@@ -11,3 +11,4 @@ sqlmodel>=0.0.22
 asyncpg>=0.29
 alembic>=1.13
 psycopg2-binary>=2.9  # sync driver for alembic migrations
+sentry-sdk[fastapi]>=2.15

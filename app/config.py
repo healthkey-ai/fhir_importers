@@ -68,6 +68,15 @@ class Settings(BaseSettings):
     healthex_project_id: str = ""
     healthex_base_url: str = "https://api.healthex.io"
 
+    # Sentry error reporting. Empty DSN disables Sentry entirely (dev default).
+    # `environment` tags events (prod / staging / dev) and `release` pins the
+    # rolled-out commit (set by the deploy workflow to $GITHUB_SHA).
+    sentry_dsn: str = ""
+    sentry_environment: str = "development"
+    sentry_release: str = ""
+    # Fraction of transactions to trace. Errors are always captured regardless.
+    sentry_traces_sample_rate: float = 0.0
+
     # Directory holding the federation remote bundle (remoteEntry.js + chunks).
     # The image's multi-stage build drops the Vite output here; the app mounts it
     # at /remote via StaticFiles. If the directory is missing (e.g. running

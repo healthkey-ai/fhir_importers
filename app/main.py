@@ -4,10 +4,12 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import httpx
+import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from redis.asyncio import from_url as redis_from_url
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 from .airflow import AirflowClient
 from .auth import FirebaseTokenVerifier
@@ -34,6 +36,33 @@ logging.basicConfig(
 
 
 settings = Settings()
+
+
+# Sentry is initialized BEFORE the FastAPI app is constructed so import-time
+# and lifespan errors are captured too. An empty SENTRY_DSN is a no-op — the
+# SDK is off entirely. Errors from `logger.exception(...)` and unhandled
+# exceptions raised out of route handlers auto-report; the FastAPI/Starlette
+# integrations ship as part of `sentry-sdk[fastapi]` and are auto-enabled.
+if settings.sentry_dsn:
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        environment=settings.sentry_environment,
+        release=settings.sentry_release or None,
+        traces_sample_rate=settings.sentry_traces_sample_rate,
+        # Send PII only when explicitly opted in via env; default false so
+        # request bodies + user emails don't leak to Sentry by accident.
+        send_default_pii=False,
+        integrations=[
+            # INFO+ becomes breadcrumbs (context in the event), ERROR+ becomes
+            # its own captured event. Matches how our code uses logging today
+            # (logger.exception → auto-report; logger.info → context only).
+            LoggingIntegration(level=logging.INFO, event_level=logging.ERROR),
+        ],
+    )
+    logging.getLogger(__name__).info(
+        "Sentry initialized (env=%s, release=%s)",
+        settings.sentry_environment, settings.sentry_release or "unset",
+    )
 
 
 @asynccontextmanager
