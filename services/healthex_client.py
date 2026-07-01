@@ -175,10 +175,42 @@ class HealthExClient:
             f"/v1/projects/{self.project_id}/patients/{patient_id}/demographics",
         )
 
-    async def get_data_retrieval_status(self, patient_id: str) -> HealthExDataStatus:
-        data = await self._get_json(
-            f"/v1/projects/{self.project_id}/patients/{patient_id}/data-retrieval-status",
-        )
+    async def get_data_retrieval_status(
+        self, patient_id: str,
+    ) -> HealthExDataStatus | None:
+        """Fetch retrieval status for a consented patient.
+
+        Returns None if HealthEx has no org-scoped status endpoint for us to
+        call. The documented `/v1/patients/data-retrieval/status` endpoint
+        requires a PATIENT JWT (it's for the patient-side portal to poll its
+        own status), and the org-scoped variant we tried
+        (`/v1/projects/{pid}/patients/{pid}/data-retrieval-status`) returns
+        404 in production — no such route. Until HealthEx confirms an
+        org-side endpoint, callers must treat `None` as "status unknown, keep
+        current state" rather than propagating an error.
+        """
+        url = f"{self._base}/v1/projects/{self.project_id}/patients/{patient_id}/data-retrieval-status"
+        headers = await self._auth_headers_json()
+        headers.pop("Content-Type", None)
+        try:
+            r = await self._http.get(url, headers=headers)
+        except httpx.HTTPError as exc:
+            raise HealthExError(f"GET {url}: {exc}") from exc
+        if r.status_code == 404:
+            # Log once per call so a future doc/endpoint change is visible.
+            _logger.debug(
+                "HealthEx data-retrieval-status 404 (endpoint not exposed "
+                "for org JWT) — treating as unknown",
+            )
+            return None
+        if r.status_code >= 400:
+            raise HealthExError(
+                f"GET {url} returned {r.status_code}: {r.text[:200]}",
+            )
+        try:
+            data = r.json()
+        except ValueError as exc:
+            raise HealthExError(f"GET {url} returned non-JSON body") from exc
         return HealthExDataStatus(
             overall_status=data.get("dataRetrievalStatus", "UNKNOWN"),
             vectorization_status=data.get("vectorizationStatus"),

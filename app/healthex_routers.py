@@ -187,7 +187,14 @@ async def poll_status(
             detail=f"HealthEx upstream error: {exc}",
         ) from exc
 
-    new_status = _map_upstream_status(upstream.overall_status, link.status)
+    # `upstream is None` means HealthEx doesn't expose an org-scoped status
+    # endpoint (see HealthExClient.get_data_retrieval_status). Keep the row's
+    # current status and just refresh polled_at so the UI stops looking like
+    # the backend is stuck.
+    new_status = (
+        _map_upstream_status(upstream.overall_status, link.status)
+        if upstream is not None else link.status
+    )
     updated = await repo.update_status(
         user_uid=uid, project_id=project_id,
         status=new_status, polled_at=now,
@@ -201,8 +208,10 @@ async def poll_status(
         project_id=project_id,
         healthex_patient_id=updated.healthex_patient_id,
         status=updated.status,
-        overall_status=upstream.overall_status,
-        vectorization_status=upstream.vectorization_status,
+        overall_status=upstream.overall_status if upstream is not None else None,
+        vectorization_status=(
+            upstream.vectorization_status if upstream is not None else None
+        ),
         polled_at=now,
     )
 
