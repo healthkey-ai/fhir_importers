@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
+from .airflow import BaseAirflowClient
 from .auth import get_current_user_uid
 from services.healthex_client import HealthExClient, HealthExError
 from .healthex_links import (
@@ -16,10 +17,18 @@ from .healthex_links import (
 )
 from .schemas import (
     HealthExConnectRequest,
+    HealthExIngestResponse,
     HealthExLinkResponse,
     HealthExRefreshResponse,
     HealthExStatusResponse,
 )
+
+
+HEALTHEX_EXTRACT_DAG = "healthex_extract"
+
+
+def get_airflow_client(request: Request) -> BaseAirflowClient:
+    return request.app.state.airflow_client
 
 
 _logger = logging.getLogger(__name__)
@@ -215,6 +224,77 @@ async def poll_status(
         ),
         polled_at=now,
     )
+
+
+@router.post(
+    "/connections/{project_id}/ingest",
+    response_model=HealthExIngestResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def ingest_connection(
+    project_id: str,
+    uid: str = Depends(get_current_user_uid),
+    repo: BaseHealthExLinksRepository = Depends(get_healthex_links_repo),
+    airflow: BaseAirflowClient = Depends(get_airflow_client),
+) -> HealthExIngestResponse:
+    """Trigger the healthex_extract Airflow DAG for a consented patient.
+
+    Fire-and-forget: returns 202 with `dag_run_id` immediately; the DAG
+    pulls, stages the raw Bundle to S3, and ingests to OMOP. Mirrors Epic's
+    manual sync endpoint at /home/nick/PycharmProjects/fhir-importers/app/routers.py:163.
+    See /home/nick/PycharmProjects/healthkey-etl/healthex.md for the DAG spec.
+
+    Distinct from /refresh, which does a synchronous in-process pull and
+    returns an inline summary — that's the operator's "show me what
+    HealthEx has right now" button; this is the "kick off the pipeline
+    that writes to OMOP" button.
+    """
+    link = await repo.get(uid, project_id)
+    if link is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No HealthEx link for project: {project_id}",
+        )
+    if link.healthex_patient_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "HealthEx has not resolved a patientId yet — consent is "
+                "still pending. Wait for the status poll to advance to "
+                "RETRIEVAL_IN_PROGRESS before triggering ingest."
+            ),
+        )
+
+    since_iso = link.last_synced_at.isoformat() if link.last_synced_at else None
+    conf = {
+        "user_uid": uid,
+        "project_id": project_id,
+        "healthex_patient_id": link.healthex_patient_id,
+        "external_id": link.external_id,
+        "sync_mode": "incremental" if since_iso else "initial",
+        "since": since_iso,
+    }
+    try:
+        dag_run_id = await airflow.create_dag_run(
+            dag=HEALTHEX_EXTRACT_DAG,
+            dag_run_prefix=f"{uid}__{project_id}",
+            conf=conf,
+        )
+    except Exception as exc:
+        _logger.exception(
+            "Failed to trigger %s DAG uid=%s project=%s",
+            HEALTHEX_EXTRACT_DAG, uid, project_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Airflow trigger failed: {exc}",
+        ) from exc
+
+    _logger.info(
+        "healthex.ingest.triggered uid=%s project=%s patient=%s dag_run=%s sync_mode=%s",
+        uid, project_id, link.healthex_patient_id, dag_run_id, conf["sync_mode"],
+    )
+    return HealthExIngestResponse(project_id=project_id, dag_run_id=dag_run_id)
 
 
 @router.post(

@@ -3,6 +3,7 @@ import { HealthExProvider } from "./HealthExProvider";
 import { useHealthExClient } from "./HealthExContext";
 import type {
   HealthExConnectionsProps,
+  HealthExIngestResult,
   HealthExLink,
   HealthExRefreshResult,
   HealthExStatus,
@@ -33,9 +34,13 @@ function HealthExConnectionsInner({
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState<string | null>(null);
+  const [ingesting, setIngesting] = useState<string | null>(null);
   // Keyed by project_id so multiple connections show independent results.
   const [refreshResults, setRefreshResults] = useState<
     Record<string, HealthExRefreshResult>
+  >({});
+  const [ingestResults, setIngestResults] = useState<
+    Record<string, HealthExIngestResult>
   >({});
 
   const load = useCallback(async () => {
@@ -86,6 +91,21 @@ function HealthExConnectionsInner({
     }
   };
 
+  const ingest = async (projectId: string) => {
+    setIngesting(projectId);
+    setError(null);
+    try {
+      const result = await client.ingest(projectId);
+      setIngestResults((prev) => ({ ...prev, [projectId]: result }));
+    } catch (e: unknown) {
+      const err = e instanceof Error ? e : new Error(String(e));
+      setError(err.message);
+      onError?.(err);
+    } finally {
+      setIngesting(null);
+    }
+  };
+
   return (
     <>
       <h2>HealthEx connections</h2>
@@ -115,15 +135,28 @@ function HealthExConnectionsInner({
               </div>
               <div className="healthex-connection-actions">
                 {c.healthex_patient_id && (
-                  <button
-                    type="button"
-                    className="healthex-refresh"
-                    onClick={() => refresh(c.project_id)}
-                    disabled={refreshing === c.project_id}
-                    title="Manually pull the latest FHIR bundle from HealthEx"
-                  >
-                    {refreshing === c.project_id ? "Refreshing…" : "Refresh"}
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      className="healthex-refresh"
+                      onClick={() => refresh(c.project_id)}
+                      disabled={refreshing === c.project_id}
+                      title="Manually pull the latest FHIR bundle from HealthEx — inline summary, not persisted"
+                    >
+                      {refreshing === c.project_id ? "Refreshing…" : "Refresh"}
+                    </button>
+                    <button
+                      type="button"
+                      className="healthex-ingest"
+                      onClick={() => ingest(c.project_id)}
+                      disabled={ingesting === c.project_id}
+                      title="Trigger the healthex_extract Airflow DAG — persists to OMOP"
+                    >
+                      {ingesting === c.project_id
+                        ? "Kicking off…"
+                        : "Sync to OMOP"}
+                    </button>
+                  </>
                 )}
                 <button
                   type="button"
@@ -134,6 +167,12 @@ function HealthExConnectionsInner({
                   {deleting === c.project_id ? "Removing…" : "Disconnect"}
                 </button>
               </div>
+              {ingestResults[c.project_id] && (
+                <div className="healthex-ingest-result">
+                  Airflow DAG run queued —{" "}
+                  <code>{ingestResults[c.project_id].dag_run_id}</code>
+                </div>
+              )}
               {refreshResults[c.project_id] && (
                 <div className="healthex-refresh-result">
                   Pulled {refreshResults[c.project_id].total_entries}{" "}

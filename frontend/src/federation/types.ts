@@ -89,6 +89,16 @@ export interface HealthExStatusResult {
   polled_at?: string | null;
 }
 
+/** Response for POST /healthex/connections/{project_id}/ingest.
+ *
+ * Fires the healthex_extract Airflow DAG; returns 202 with the dag_run_id.
+ * Poll Airflow (or a future webhook) for completion.
+ */
+export interface HealthExIngestResult {
+  project_id: string;
+  dag_run_id: string;
+}
+
 /** Summary of a manual POST /healthex/connections/{project_id}/refresh. */
 export interface HealthExRefreshResult {
   project_id: string;

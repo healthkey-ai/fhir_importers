@@ -72,6 +72,16 @@ class HealthExStatusResponse(BaseModel):
     polled_at: datetime | None = None
 
 
+class HealthExIngestResponse(BaseModel):
+    """Response for POST .../ingest — triggers healthex_extract Airflow DAG.
+
+    Fires-and-forgets; the caller polls Airflow (or a future callback) for
+    completion. Mirrors SyncConnectionResponse for the Epic path.
+    """
+    project_id: str
+    dag_run_id: str
+
+
 class HealthExRefreshResponse(BaseModel):
     """Summary of a manual `POST .../refresh` pull.
 
