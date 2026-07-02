@@ -164,20 +164,56 @@ async def poll_status(
 
     now = datetime.now(timezone.utc)
 
-    # Phase 1: resolve patientId by externalId. Until the patient consents on
-    # HealthEx, this returns None — the row stays PENDING_CONSENT.
-    if link.healthex_patient_id is None:
-        try:
-            patient_id = await client.find_patient_id_by_external_id(
-                link.external_id,
+    # Always call getPatientConsents — even when we already have a patient_id
+    # — so we can detect revocations initiated on HealthEx's UI (the "user
+    # deletes on HealthEx side" case). The extra ~200-500ms round-trip is
+    # the price for keeping our DB from drifting from HealthEx ground truth.
+    try:
+        consent = await client.get_consent_state(link.external_id)
+    except HealthExError as exc:
+        _logger.exception("HealthEx consent lookup failed uid=%s", uid)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"HealthEx upstream error: {exc}",
+        ) from exc
+
+    # Revocation: we had a patient_id but HealthEx no longer has an OPTED_IN
+    # record for us. `known_by_healthex=True` distinguishes real revocation
+    # from an eventual-consistency blip (in which case results would be empty
+    # entirely). Terminal state — no further phase-2 polling.
+    if link.healthex_patient_id is not None and consent.patient_id is None:
+        if consent.known_by_healthex:
+            _logger.info(
+                "healthex.consent.revoked uid=%s project=%s patient=%s",
+                uid, project_id, link.healthex_patient_id,
             )
-        except HealthExError as exc:
-            _logger.exception("HealthEx lookup failed uid=%s", uid)
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=f"HealthEx upstream error: {exc}",
-            ) from exc
-        if patient_id is None:
+            updated = await repo.update_status(
+                user_uid=uid, project_id=project_id,
+                status=STATUS_REVOKED, polled_at=now,
+            )
+            if updated is None:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="HealthEx link mutated mid-poll",
+                )
+            return HealthExStatusResponse(
+                project_id=project_id,
+                healthex_patient_id=updated.healthex_patient_id,
+                status=updated.status, polled_at=now,
+            )
+        # else: transient — HealthEx knows nothing right now but we've had
+        # them consented before. Log and hold the current status; the next
+        # poll will either confirm the revocation or restore state.
+        _logger.warning(
+            "healthex.consent.transient_unknown uid=%s project=%s patient=%s "
+            "— had patient_id, HealthEx now returns no records; not flipping "
+            "to REVOKED yet",
+            uid, project_id, link.healthex_patient_id,
+        )
+
+    # Phase 1: still waiting for the first OPTED_IN consent.
+    if link.healthex_patient_id is None:
+        if consent.patient_id is None:
             updated = await repo.update_status(
                 user_uid=uid, project_id=project_id,
                 status=STATUS_PENDING_CONSENT, polled_at=now,
@@ -194,7 +230,8 @@ async def poll_status(
         link = await repo.update_status(
             user_uid=uid, project_id=project_id,
             status=STATUS_RETRIEVAL_IN_PROGRESS,
-            healthex_patient_id=patient_id, polled_at=now, consented_at=now,
+            healthex_patient_id=consent.patient_id,
+            polled_at=now, consented_at=now,
         )
         if link is None:
             raise HTTPException(

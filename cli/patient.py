@@ -60,17 +60,23 @@ async def find(external_id):
     """Resolve externalId → patientId (OPTED_IN PATIENT_DIRECTED_DATA_EXCHANGE)."""
     async with ServiceLocator.healthex_client() as client:
         try:
-            patient_id = await client.find_patient_id_by_external_id(external_id)
+            consent = await client.get_consent_state(external_id)
         except HealthExError as exc:
             echo_http_error(exc)
-        if patient_id:
-            click.echo(patient_id)
+        if consent.patient_id:
+            click.echo(consent.patient_id)
             return
-        click.secho(
-            "(no OPTED_IN PATIENT_DIRECTED_DATA_EXCHANGE consent found — "
-            "still pending or revoked)",
-            fg="yellow",
-        )
+        if consent.known_by_healthex:
+            click.secho(
+                "(HealthEx knows this externalId but consent is not OPTED_IN "
+                "— revoked or opted-out)",
+                fg="yellow",
+            )
+        else:
+            click.secho(
+                "(HealthEx has no record for this externalId — still pending)",
+                fg="yellow",
+            )
         raise SystemExit(2)
 
 

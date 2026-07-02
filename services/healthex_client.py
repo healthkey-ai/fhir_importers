@@ -16,6 +16,24 @@ _TOKEN_EXPIRY_SKEW_SECONDS = 60
 
 
 @dataclass(frozen=True)
+class HealthExConsentState:
+    """Snapshot of one externalId's PATIENT_DIRECTED_DATA_EXCHANGE consent
+    within our project. Distinguishes three cases that
+    `find_patient_id_by_external_id` used to collapse to `None`:
+
+    - `patient_id is not None`: HealthEx has an OPTED_IN record for us.
+    - `patient_id is None, known_by_healthex is True`: they know this
+      externalId but the PATIENT_DIRECTED_DATA_EXCHANGE consent is not
+      currently OPTED_IN — treat as REVOKED. This is the state Diego's
+      question about "user deletes on HealthEx UI" surfaces.
+    - `patient_id is None, known_by_healthex is False`: HealthEx has no
+      record at all — still pending.
+    """
+    patient_id: str | None
+    known_by_healthex: bool
+
+
+@dataclass(frozen=True)
 class HealthExDataStatus:
     overall_status: str
     vectorization_status: str | None
@@ -123,13 +141,11 @@ class HealthExClient:
             raise HealthExError(f"POST {url} returned unexpected body: {link[:200]!r}")
         return link
 
-    async def find_patient_id_by_external_id(self, external_id: str) -> str | None:
-        """Resolve externalId → patientId via getPatientConsents.
+    async def get_consent_state(self, external_id: str) -> HealthExConsentState:
+        """Fetch this externalId's consent snapshot via getPatientConsents.
 
-        Returns the patientId from the first OPTED_IN
-        PATIENT_DIRECTED_DATA_EXCHANGE consent record; None if the patient
-        hasn't consented yet or doesn't exist on HealthEx's side yet.
-        HealthEx-side eventual consistency can lag the UI by tens of seconds.
+        Docs: https://docs.healthex.io/consent-examples/find-all-studies-patient-consented-to
+        See HealthExConsentState for the three cases this call distinguishes.
         """
         url = f"{self._base}/v1/patients/consents"
         headers = await self._auth_headers_json()
@@ -147,7 +163,7 @@ class HealthExClient:
         # pending-consent — vendor wording has changed before. Log if the
         # message doesn't contain "patient not found" so a real vendor breakage
         # (different error type behind the same status) is observable instead
-        # of silently coerced to None.
+        # of silently coerced to unknown.
         if r.status_code == 400 and len(r.text) < 256:
             if "patient not found" not in r.text.lower():
                 _logger.warning(
@@ -155,20 +171,28 @@ class HealthExClient:
                     "(treating as pending): %s",
                     r.text[:200],
                 )
-            return None
+            return HealthExConsentState(patient_id=None, known_by_healthex=False)
         if r.status_code >= 400:
             raise HealthExError(f"GET {url} returned {r.status_code}: {r.text[:200]}")
         try:
             data = r.json()
         except ValueError as exc:
             raise HealthExError(f"GET {url} returned non-JSON body") from exc
+        # Walk PATIENT_DIRECTED_DATA_EXCHANGE records. If any is OPTED_IN we
+        # take its patientId; otherwise any presence of the record type means
+        # HealthEx knows this externalId but they've opted out (revoked).
+        known = False
         for entry in data.get("results", []) or []:
             cr = (entry or {}).get("consentRecord") or {}
-            if (cr.get("consentType") == "PATIENT_DIRECTED_DATA_EXCHANGE"
-                    and cr.get("consentStatus") == "OPTED_IN"
+            if cr.get("consentType") != "PATIENT_DIRECTED_DATA_EXCHANGE":
+                continue
+            known = True
+            if (cr.get("consentStatus") == "OPTED_IN"
                     and cr.get("patientId")):
-                return cr["patientId"]
-        return None
+                return HealthExConsentState(
+                    patient_id=cr["patientId"], known_by_healthex=True,
+                )
+        return HealthExConsentState(patient_id=None, known_by_healthex=known)
 
     async def get_demographics(self, patient_id: str) -> dict:
         return await self._get_json(

@@ -42,7 +42,25 @@ function HealthExConnectionsInner({
     setLoading(true);
     setError(null);
     try {
-      setConnections(await client.listConnections());
+      const rows = await client.listConnections();
+      setConnections(rows);
+      // Reconcile with HealthEx: `listConnections` returns our DB state,
+      // which can lag if the user revoked consent on HealthEx's own UI.
+      // Firing `/status` per row on mount forces the backend to re-check
+      // getPatientConsents; the response updates our DB and reflects a
+      // revocation as status=REVOKED. Fire-and-forget — the second render
+      // picks up refreshed rows.
+      const refreshed = await Promise.all(
+        rows.map((r) =>
+          r.healthex_patient_id
+            ? client
+                .getStatus(r.project_id)
+                .then((s) => ({ ...r, status: s.status }))
+                .catch(() => r)
+            : Promise.resolve(r),
+        ),
+      );
+      setConnections(refreshed);
     } catch (e: unknown) {
       const err = e instanceof Error ? e : new Error(String(e));
       setError(err.message);
