@@ -299,3 +299,62 @@ async def test_reconcile_401_when_no_bearer_token(
 
     assert resp.status_code == 401
     airflow_mock.create_dag_run.assert_not_awaited()
+
+
+# ---------------------------------------------------------------------- #
+# GET /healthex/connections/{project_id}/status                          #
+# ---------------------------------------------------------------------- #
+# Post-migration: /status returns the DB row + refreshes polled_at. No
+# HealthEx round-trip; reconciliation is owned by the healthex_reconcile
+# DAG. Guards are here so nobody accidentally re-adds a HealthEx call
+# (which would defeat the whole "reconcile happens in Airflow" split).
+
+async def test_status_returns_db_state_without_hitting_healthex(
+    http, bearer, links_repo, healthex_client_mock,
+) -> None:
+    await _seed_link(links_repo, patient_id=PATIENT_ID)
+
+    resp = await http.get(
+        f"/healthex/connections/{PROJECT_ID}/status", headers=bearer,
+    )
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["project_id"] == PROJECT_ID
+    assert body["healthex_patient_id"] == PATIENT_ID
+    assert body["status"] == STATUS_RETRIEVAL_IN_PROGRESS
+    assert body["polled_at"] is not None
+    # Critical invariant: NO calls to the HealthExClient. If someone
+    # re-adds a get_consent_state / get_data_retrieval_status call here,
+    # this fails.
+    healthex_client_mock.get_consent_state.assert_not_called()
+    healthex_client_mock.get_data_retrieval_status.assert_not_called()
+
+
+async def test_status_advances_polled_at_on_each_call(
+    http, bearer, links_repo,
+) -> None:
+    await _seed_link(links_repo, patient_id=PATIENT_ID)
+
+    first = await http.get(
+        f"/healthex/connections/{PROJECT_ID}/status", headers=bearer,
+    )
+    # Small non-zero gap; the endpoint uses datetime.now() under the hood
+    # and the fake repo persists whatever we hand in.
+    second = await http.get(
+        f"/healthex/connections/{PROJECT_ID}/status", headers=bearer,
+    )
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert first.json()["polled_at"] != second.json()["polled_at"], (
+        "polled_at must advance on every /status call so the frontend can "
+        "detect a completed reconcile-DAG run"
+    )
+
+
+async def test_status_404_when_no_link(http, bearer) -> None:
+    resp = await http.get(
+        f"/healthex/connections/{PROJECT_ID}/status", headers=bearer,
+    )
+    assert resp.status_code == 404

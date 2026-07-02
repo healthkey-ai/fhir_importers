@@ -8,10 +8,7 @@ from .airflow import AirflowError, BaseAirflowClient
 from .auth import get_current_user_uid
 from services.healthex_client import HealthExClient, HealthExError
 from .healthex_links import (
-    STATUS_COMPLETE,
-    STATUS_ERROR,
     STATUS_PENDING_CONSENT,
-    STATUS_RETRIEVAL_IN_PROGRESS,
     BaseHealthExLinksRepository,
     HealthExLinksRepository,
 )
@@ -155,8 +152,16 @@ async def poll_status(
     project_id: str,
     uid: str = Depends(get_current_user_uid),
     repo: BaseHealthExLinksRepository = Depends(get_healthex_links_repo),
-    client: HealthExClient = Depends(get_healthex_client),
 ) -> HealthExStatusResponse:
+    """Return the current row state; refresh `last_status_polled_at`.
+
+    Reconciliation with HealthEx ground truth (getPatientConsents + status
+    transitions) is now owned by the `healthex_reconcile` Airflow DAG. This
+    endpoint used to call HealthEx inline; that path was moved out on the
+    same commit that landed the `/reconcile` endpoint. Callers who want a
+    fresh reconcile should POST /healthex/connections/{project_id}/reconcile
+    and poll this endpoint (or /connections) for the updated row.
+    """
     link = await repo.get(uid, project_id)
     if link is None:
         raise HTTPException(
@@ -165,108 +170,9 @@ async def poll_status(
         )
 
     now = datetime.now(timezone.utc)
-
-    # Always call getPatientConsents — even when we already have a patient_id
-    # — so we can detect revocations initiated on HealthEx's UI (the "user
-    # deletes on HealthEx side" case). The extra ~200-500ms round-trip is
-    # the price for keeping our DB from drifting from HealthEx ground truth.
-    try:
-        consent = await client.get_consent_state(link.external_id)
-    except HealthExError as exc:
-        _logger.exception("HealthEx consent lookup failed uid=%s", uid)
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"HealthEx upstream error: {exc}",
-        ) from exc
-
-    # Revocation: we had a patient_id but HealthEx no longer has an OPTED_IN
-    # record for us. `known_by_healthex=True` distinguishes real revocation
-    # from an eventual-consistency blip (in which case results would be empty
-    # entirely). Terminal state — no further phase-2 polling.
-    if link.healthex_patient_id is not None and consent.patient_id is None:
-        if consent.known_by_healthex:
-            _logger.info(
-                "healthex.consent.revoked uid=%s project=%s patient=%s",
-                uid, project_id, link.healthex_patient_id,
-            )
-            updated = await repo.update_status(
-                user_uid=uid, project_id=project_id,
-                status=STATUS_REVOKED, polled_at=now,
-            )
-            if updated is None:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="HealthEx link mutated mid-poll",
-                )
-            return HealthExStatusResponse(
-                project_id=project_id,
-                healthex_patient_id=updated.healthex_patient_id,
-                status=updated.status, polled_at=now,
-            )
-        # else: transient — HealthEx knows nothing right now but we've had
-        # them consented before. Log and hold the current status; the next
-        # poll will either confirm the revocation or restore state.
-        _logger.warning(
-            "healthex.consent.transient_unknown uid=%s project=%s patient=%s "
-            "— had patient_id, HealthEx now returns no records; not flipping "
-            "to REVOKED yet",
-            uid, project_id, link.healthex_patient_id,
-        )
-
-    # Phase 1: still waiting for the first OPTED_IN consent.
-    if link.healthex_patient_id is None:
-        if consent.patient_id is None:
-            updated = await repo.update_status(
-                user_uid=uid, project_id=project_id,
-                status=STATUS_PENDING_CONSENT, polled_at=now,
-            )
-            if updated is None:
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="HealthEx link mutated mid-poll",
-                )
-            return HealthExStatusResponse(
-                project_id=project_id, healthex_patient_id=None,
-                status=updated.status, polled_at=now,
-            )
-        link = await repo.update_status(
-            user_uid=uid, project_id=project_id,
-            status=STATUS_RETRIEVAL_IN_PROGRESS,
-            healthex_patient_id=consent.patient_id,
-            polled_at=now, consented_at=now,
-        )
-        if link is None:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="HealthEx link mutated mid-poll",
-            )
-
-    # Phase 2: patient is consented — poll the data-retrieval pipeline.
-    try:
-        upstream = await client.get_data_retrieval_status(
-            link.healthex_patient_id,
-        )
-    except HealthExError as exc:
-        _logger.exception(
-            "HealthEx status poll failed uid=%s patient=%s",
-            uid, link.healthex_patient_id,
-        )
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"HealthEx upstream error: {exc}",
-        ) from exc
-
-    # `upstream is None` means HealthEx doesn't expose an org-scoped status
-    # endpoint (see HealthExClient.get_data_retrieval_status). Keep the row's
-    # current status and just refresh polled_at so the UI stops looking like
-    # the backend is stuck.
-    new_status = (
-        _map_upstream_status(upstream.overall_status, link.status)
-        if upstream is not None else link.status
-    )
     updated = await repo.update_status(
         user_uid=uid, project_id=project_id,
-        status=new_status, polled_at=now,
+        status=link.status, polled_at=now,
     )
     if updated is None:
         raise HTTPException(
@@ -277,10 +183,6 @@ async def poll_status(
         project_id=project_id,
         healthex_patient_id=updated.healthex_patient_id,
         status=updated.status,
-        overall_status=upstream.overall_status if upstream is not None else None,
-        vectorization_status=(
-            upstream.vectorization_status if upstream is not None else None
-        ),
         polled_at=now,
     )
 
@@ -408,26 +310,6 @@ async def reconcile_connection(
         uid, project_id, dag_run_id,
     )
     return HealthExReconcileResponse(project_id=project_id, dag_run_id=dag_run_id)
-
-
-def _map_upstream_status(upstream: str, current: str) -> str:
-    """Coerce HealthEx's `dataRetrievalStatus` to our state machine.
-
-    HealthEx reports COMPLETE / IN_PROGRESS / NOT_STARTED / ERROR per their
-    docs; the exact string set is unverified — anything we don't recognize is
-    a no-op (keeps the current status) to avoid corrupting state on a doc lag.
-    """
-    upstream_norm = (upstream or "").upper()
-    if upstream_norm in {"COMPLETE", "COMPLETED"}:
-        return STATUS_COMPLETE
-    if upstream_norm in {"IN_PROGRESS", "RUNNING"}:
-        return STATUS_RETRIEVAL_IN_PROGRESS
-    if upstream_norm == "ERROR":
-        return STATUS_ERROR
-    if upstream_norm in {"NOT_STARTED", "PENDING"}:
-        # Still awaiting consent / retrieval kickoff upstream.
-        return current
-    return current
 
 
 def _to_response(meta) -> HealthExLinkResponse:

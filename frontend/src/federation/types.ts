@@ -99,6 +99,16 @@ export interface HealthExIngestResult {
   dag_run_id: string;
 }
 
+/** Response for POST /healthex/connections/{project_id}/reconcile.
+ *
+ * Fires the healthex_reconcile Airflow DAG for a single row. Same shape as
+ * HealthExIngestResult but a distinct type mirrors the backend split.
+ */
+export interface HealthExReconcileResult {
+  project_id: string;
+  dag_run_id: string;
+}
+
 
 export interface HealthExBaseProps {
   /** Authenticated HTTP client for the fhir-importers microservice. */

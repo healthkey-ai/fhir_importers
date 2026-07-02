@@ -44,23 +44,31 @@ function HealthExConnectionsInner({
     try {
       const rows = await client.listConnections();
       setConnections(rows);
-      // Reconcile with HealthEx: `listConnections` returns our DB state,
-      // which can lag if the user revoked consent on HealthEx's own UI.
-      // Firing `/status` per row on mount forces the backend to re-check
-      // getPatientConsents; the response updates our DB and reflects a
-      // revocation as status=REVOKED. Fire-and-forget — the second render
-      // picks up refreshed rows.
-      const refreshed = await Promise.all(
-        rows.map((r) =>
-          r.healthex_patient_id
-            ? client
-                .getStatus(r.project_id)
-                .then((s) => ({ ...r, status: s.status }))
-                .catch(() => r)
-            : Promise.resolve(r),
-        ),
+      // Kick a HealthEx-side reconcile per row so revocations initiated on
+      // HealthEx's own UI (or fresh OPTED_IN records that landed since our
+      // last poll) surface without waiting for the periodic DAG tick.
+      // Fire-and-forget: the DAG updates our DB async, and we re-fetch a
+      // few times below to display the reconciled state.
+      await Promise.all(
+        rows.map((r) => client.reconcile(r.project_id).catch(() => null)),
       );
-      setConnections(refreshed);
+      // Bounded polling: refetch listConnections up to N times with a
+      // small delay to let the DAG catch up. Stops early once each row's
+      // `last_status_polled_at` has advanced past the initial value.
+      const initialPolled = new Map(
+        rows.map((r) => [r.project_id, r.last_status_polled_at] as const),
+      );
+      const POLL_MS = 3000;
+      const POLL_MAX_ATTEMPTS = 5; // ~15s ceiling; DAG typically finishes in <10s
+      for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+        const next = await client.listConnections();
+        setConnections(next);
+        const allAdvanced = next.every(
+          (r) => r.last_status_polled_at !== initialPolled.get(r.project_id),
+        );
+        if (allAdvanced) break;
+      }
     } catch (e: unknown) {
       const err = e instanceof Error ? e : new Error(String(e));
       setError(err.message);

@@ -39,10 +39,18 @@ function ConnectHealthExInner({
   }, [client]);
 
   // Poll for consent + retrieval status whenever we have a link that hasn't
-  // resolved a patient_id yet.
+  // resolved a patient_id yet. Fires a reconcile at start to kick the
+  // healthex_reconcile DAG; without that kick, /status just returns cached
+  // DB state and we'd wait for the periodic tick before seeing patient_id
+  // resolve.
   useEffect(() => {
     if (!link || link.healthex_patient_id) return;
     if (startedAtRef.current === null) startedAtRef.current = Date.now();
+
+    // Fire the DAG once at start; subsequent /status polls read the DB row
+    // the DAG updates. Failure is swallowed — periodic reconcile is our
+    // safety net.
+    client.reconcile(link.project_id).catch(() => null);
 
     let cancelled = false;
     const id = window.setInterval(async () => {
