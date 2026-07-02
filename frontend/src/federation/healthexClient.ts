@@ -11,6 +11,7 @@ export interface HealthExClient {
     email: string,
     firstName?: string,
     lastName?: string,
+    redirectUri?: string,
   ) => Promise<HealthExLink>;
   listConnections: () => Promise<HealthExLink[]>;
   getStatus: (projectId: string) => Promise<HealthExStatusResult>;
@@ -60,11 +61,12 @@ export function createHealthExClient(
   }
 
   return {
-    connect: (email, firstName, lastName) =>
+    connect: (email, firstName, lastName, redirectUri) =>
       post<HealthExLink>("/healthex/connect", {
         email,
         first_name: firstName,
         last_name: lastName,
+        redirect_uri: redirectUri,
       }),
     listConnections: () => get<HealthExLink[]>("/healthex/connections"),
     getStatus: (projectId) =>

@@ -1,6 +1,7 @@
 import logging
 from collections.abc import AsyncIterator
 from datetime import datetime, timezone
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
@@ -125,6 +126,8 @@ async def connect(
             detail=f"HealthEx upstream error: {exc}",
         ) from exc
 
+    onboarding_url = _attach_redirect_uri(onboarding_url, body.redirect_uri)
+
     meta = await repo.upsert(
         user_uid=uid,
         project_id=project_id,
@@ -134,6 +137,23 @@ async def connect(
         onboarding_url=onboarding_url,
     )
     return _to_response(meta)
+
+
+def _attach_redirect_uri(onboarding_url: str, redirect_uri: str | None) -> str:
+    """Append `redirectUri=<uri>` to the HealthEx onboarding URL.
+
+    HealthEx's onboarding SPA reads a `redirectUri` query param and, if the
+    value matches its 'Redirect URLs' admin allowlist, redirects the browser
+    there after the patient consents. Callers pass the plain destination URI
+    (the frontend's `/connect/records` page or equivalent); the parameter
+    name is a HealthEx protocol detail and lives here — never on the caller.
+    """
+    if not redirect_uri:
+        return onboarding_url
+    parsed = urlparse(onboarding_url)
+    params = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    params["redirectUri"] = redirect_uri
+    return urlunparse(parsed._replace(query=urlencode(params)))
 
 
 @router.delete(

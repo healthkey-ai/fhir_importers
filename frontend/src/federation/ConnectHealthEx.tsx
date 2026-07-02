@@ -92,17 +92,15 @@ function ConnectHealthExInner({
     setConnecting(true);
     setError(null);
     try {
-      const result = await client.connect(email, firstName, lastName);
+      // redirectUri is sent to the backend; backend encodes it into the
+      // onboarding URL the way HealthEx expects. We just open whatever
+      // URL comes back — the query-param name and encoding rules are
+      // HealthEx protocol details owned by the backend.
+      const result = await client.connect(email, firstName, lastName, redirectUri);
       setLink(result);
       startedAtRef.current = null;
       if (result.onboarding_url) {
-        // HealthEx's SPA reads `redirectUri` from the URL's query params.
-        // Use URL.searchParams.set so we don't have to assume whether the
-        // onboarding URL already carries a `?xid=...` — matches the
-        // pattern healthtree-platform uses on the SvelteKit side.
-        const url = new URL(result.onboarding_url);
-        if (redirectUri) url.searchParams.set("redirectUri", redirectUri);
-        window.open(url.toString(), "_blank", "noopener");
+        window.open(result.onboarding_url, "_blank", "noopener");
       }
     } catch (e: unknown) {
       const err = e instanceof Error ? e : new Error(String(e));

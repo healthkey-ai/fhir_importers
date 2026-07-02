@@ -130,12 +130,12 @@ export interface ConnectHealthExProps extends HealthExBaseProps {
   /**
    * Where HealthEx should redirect the browser after consent.
    *
-   * Set as the `redirectUri` search-param on the onboarding URL. Must
-   * EXACTLY match a URL registered in the HealthEx project's "Redirect
-   * URLs" admin setting; otherwise the SPA logs a warning and falls
-   * through to its default close-the-tab behavior. Admin-side config
-   * was solved with HealthEx in the 2026-07-01 meeting (Diego); no
-   * CLEAR-only restriction on the current setup.
+   * Passed to the fhir-importers `/healthex/connect` endpoint verbatim;
+   * the backend attaches it to the HealthEx onboarding URL using whatever
+   * encoding HealthEx expects. Consumers don't need to know the query-param
+   * name or construction rules — just tell us the URI you want the user
+   * to land on. Must EXACTLY match a URL registered in the HealthEx
+   * project's "Redirect URLs" admin allowlist.
    */
   redirectUri?: string;
   /** Called once the patient has consented and patient_id is resolved. */

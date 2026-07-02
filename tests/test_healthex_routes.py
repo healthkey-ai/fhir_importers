@@ -320,6 +320,51 @@ async def test_reconcile_debounced_when_polled_recently(
     airflow_mock.create_dag_run.assert_not_awaited()
 
 
+# ---------------------------------------------------------------------- #
+# _attach_redirect_uri helper                                            #
+# ---------------------------------------------------------------------- #
+# The backend-side redirectUri attachment. Frontend sends a plain URI;
+# backend encodes it as HealthEx expects. Query-param name lives here
+# only — never on the frontend or the DB.
+
+def test_attach_redirect_uri_none_returns_url_unchanged() -> None:
+    from app.healthex_routers import _attach_redirect_uri
+    result = _attach_redirect_uri("https://healthex.io/onboarding?xid=abc", None)
+    assert result == "https://healthex.io/onboarding?xid=abc"
+
+
+def test_attach_redirect_uri_appends_when_query_already_present() -> None:
+    from app.healthex_routers import _attach_redirect_uri
+    result = _attach_redirect_uri(
+        "https://healthex.io/onboarding?xid=abc",
+        "https://ht-phr-staging.run.app/connect/records",
+    )
+    # Order not guaranteed by parse_qsl round-trip — assert both present.
+    assert "xid=abc" in result
+    assert "redirectUri=https%3A%2F%2Fht-phr-staging.run.app%2Fconnect%2Frecords" in result
+
+
+def test_attach_redirect_uri_appends_when_no_query() -> None:
+    from app.healthex_routers import _attach_redirect_uri
+    result = _attach_redirect_uri(
+        "https://healthex.io/onboarding",
+        "https://ht-phr.example/connect/records",
+    )
+    assert result.startswith("https://healthex.io/onboarding?")
+    assert "redirectUri=https%3A%2F%2Fht-phr.example%2Fconnect%2Frecords" in result
+
+
+def test_attach_redirect_uri_overrides_prior_redirect_uri_param() -> None:
+    """Idempotency guard — a re-mint on the same row must not double-append."""
+    from app.healthex_routers import _attach_redirect_uri
+    result = _attach_redirect_uri(
+        "https://healthex.io/onboarding?xid=abc&redirectUri=old",
+        "https://new.example/records",
+    )
+    assert result.count("redirectUri=") == 1
+    assert "redirectUri=https%3A%2F%2Fnew.example%2Frecords" in result
+
+
 async def test_reconcile_401_when_no_bearer_token(
     http, links_repo, airflow_mock,
 ) -> None:

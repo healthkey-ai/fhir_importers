@@ -49,6 +49,15 @@ class HealthExConnectRequest(BaseModel):
     email: str = Field(..., description="User's email — required by HealthEx addPatients")
     first_name: str | None = None
     last_name: str | None = None
+    redirect_uri: str | None = Field(
+        default=None,
+        description=(
+            "Where HealthEx should redirect the browser after consent. Backend "
+            "encodes this into the onboarding URL as HealthEx expects; frontend "
+            "just tells us the URI it wants to land on. Must match a URI "
+            "registered in the HealthEx project's 'Redirect URLs' admin list."
+        ),
+    )
 
 
 class HealthExLinkResponse(BaseModel):
