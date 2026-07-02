@@ -45,29 +45,16 @@ function HealthExConnectionsInner({
       const rows = await client.listConnections();
       setConnections(rows);
 
-      // On-demand reconcile is only worth firing for rows still waiting on
-      // patient_id resolution (PENDING_CONSENT). Rows with healthex_patient_id
-      // already resolved get revocation checks from the periodic 30-min DAG
-      // tick — that's acceptable freshness and keeps every page refresh from
-      // spawning N Airflow tasks.
+      // Only reconcile rows still waiting on patient_id resolution.
+      // Rows with healthex_patient_id already set get revocation checks
+      // from the periodic 30-min DAG tick — acceptable freshness. Backend
+      // owns the rate-limit (see /reconcile debounce logic), so we don't
+      // guard against rapid refresh here.
       const needsReconcile = rows.filter((r) => !r.healthex_patient_id);
       if (needsReconcile.length === 0) return;
 
-      // Per-project sessionStorage debounce guards against rapid refresh
-      // (dev, back-forward navigation) piling up redundant DAG runs.
-      const DEBOUNCE_MS = 30_000;
-      const now = Date.now();
-      const shouldReconcile = needsReconcile.filter((r) => {
-        const key = `healthex.reconcile.lastFired.${r.project_id}`;
-        const last = Number(sessionStorage.getItem(key)) || 0;
-        if (now - last < DEBOUNCE_MS) return false;
-        sessionStorage.setItem(key, String(now));
-        return true;
-      });
-      if (shouldReconcile.length === 0) return;
-
       await Promise.all(
-        shouldReconcile.map((r) =>
+        needsReconcile.map((r) =>
           client.reconcile(r.project_id).catch(() => null),
         ),
       );
@@ -76,7 +63,7 @@ function HealthExConnectionsInner({
       // small delay to let the DAG catch up. Stops early once each
       // reconciling row's `last_status_polled_at` has advanced.
       const initialPolled = new Map(
-        shouldReconcile.map(
+        needsReconcile.map(
           (r) => [r.project_id, r.last_status_polled_at] as const,
         ),
       );
@@ -86,7 +73,7 @@ function HealthExConnectionsInner({
         await new Promise((resolve) => setTimeout(resolve, POLL_MS));
         const next = await client.listConnections();
         setConnections(next);
-        const allAdvanced = shouldReconcile.every((seed) => {
+        const allAdvanced = needsReconcile.every((seed) => {
           const current = next.find((n) => n.project_id === seed.project_id);
           return (
             current !== undefined

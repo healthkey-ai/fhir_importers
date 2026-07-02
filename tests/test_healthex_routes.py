@@ -232,6 +232,7 @@ async def test_reconcile_happy_path_row_with_patient_id(
     assert resp.json() == {
         "project_id": PROJECT_ID,
         "dag_run_id": "healthex-run-abc123",
+        "debounced": False,
     }
     airflow_mock.create_dag_run.assert_awaited_once()
     kwargs = airflow_mock.create_dag_run.call_args.kwargs
@@ -288,6 +289,35 @@ async def test_reconcile_502_when_airflow_trigger_fails(
     assert detail == "Airflow trigger failed"
     # Guard: internal Airflow host name must not leak in the client response.
     assert "airflow.internal" not in detail
+
+
+async def test_reconcile_debounced_when_polled_recently(
+    http, bearer, links_repo, airflow_mock,
+) -> None:
+    """Backend-side rate limit: if last_status_polled_at is < 30s old, the
+    reconcile endpoint returns 202 with dag_run_id=null + debounced=true
+    and does NOT fire the DAG. Guards against rapid page refresh spawning
+    N tasks."""
+    now = datetime.now(timezone.utc)
+    await _seed_link(links_repo, patient_id=PATIENT_ID, last_synced_at=None)
+    # Fake a recent poll on the row (5 seconds ago).
+    await links_repo.update_status(
+        user_uid=UID, project_id=PROJECT_ID,
+        status=STATUS_RETRIEVAL_IN_PROGRESS,
+        polled_at=now,
+    )
+
+    resp = await http.post(
+        f"/healthex/connections/{PROJECT_ID}/reconcile", headers=bearer,
+    )
+
+    assert resp.status_code == 202
+    body = resp.json()
+    assert body["project_id"] == PROJECT_ID
+    assert body["debounced"] is True
+    assert body["dag_run_id"] is None
+    # Critical: no DAG run must have been triggered.
+    airflow_mock.create_dag_run.assert_not_awaited()
 
 
 async def test_reconcile_401_when_no_bearer_token(

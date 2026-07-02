@@ -24,6 +24,13 @@ from .schemas import (
 HEALTHEX_EXTRACT_DAG = "healthex_extract"
 HEALTHEX_RECONCILE_DAG = "healthex_reconcile"
 
+# Suppress duplicate reconcile-DAG triggers within this window. Uses the
+# row's last_status_polled_at as the timestamp — any recent /status poll,
+# recent DAG completion, or recent /reconcile trigger counts as "fresh
+# enough." Keeps rapid page refresh and multi-tab scenarios from spawning
+# redundant Airflow tasks.
+_RECONCILE_DEBOUNCE_SECONDS = 30
+
 
 def get_airflow_client(request: Request) -> BaseAirflowClient:
     return request.app.state.airflow_client
@@ -286,6 +293,18 @@ async def reconcile_connection(
             detail=f"No HealthEx link for project: {project_id}",
         )
 
+    now = datetime.now(timezone.utc)
+    if link.last_status_polled_at is not None:
+        age_s = (now - link.last_status_polled_at).total_seconds()
+        if age_s < _RECONCILE_DEBOUNCE_SECONDS:
+            _logger.info(
+                "healthex.reconcile.debounced uid=%s project=%s age_s=%.1f",
+                uid, project_id, age_s,
+            )
+            return HealthExReconcileResponse(
+                project_id=project_id, dag_run_id=None, debounced=True,
+            )
+
     conf = {"user_uid": uid, "project_id": project_id}
     try:
         dag_run_id = await airflow.create_dag_run(
@@ -305,11 +324,19 @@ async def reconcile_connection(
             detail="Airflow trigger failed",
         ) from exc
 
+    # Bump last_status_polled_at so subsequent /reconcile calls within the
+    # debounce window are suppressed even before the DAG completes.
+    await repo.update_status(
+        user_uid=uid, project_id=project_id,
+        status=link.status, polled_at=now,
+    )
     _logger.info(
         "healthex.reconcile.triggered uid=%s project=%s dag_run=%s",
         uid, project_id, dag_run_id,
     )
-    return HealthExReconcileResponse(project_id=project_id, dag_run_id=dag_run_id)
+    return HealthExReconcileResponse(
+        project_id=project_id, dag_run_id=dag_run_id, debounced=False,
+    )
 
 
 def _to_response(meta) -> HealthExLinkResponse:

@@ -47,17 +47,12 @@ function ConnectHealthExInner({
     if (!link || link.healthex_patient_id) return;
     if (startedAtRef.current === null) startedAtRef.current = Date.now();
 
-    // Fire the DAG once at start; subsequent /status polls read the DB row
-    // the DAG updates. Failure is swallowed — periodic reconcile is our
-    // safety net. Same 30s sessionStorage debounce as HealthExConnections
-    // so rapid remounts (dev refresh, back-forward) don't pile up DAG runs.
-    const DEBOUNCE_MS = 30_000;
-    const key = `healthex.reconcile.lastFired.${link.project_id}`;
-    const last = Number(sessionStorage.getItem(key)) || 0;
-    if (Date.now() - last >= DEBOUNCE_MS) {
-      sessionStorage.setItem(key, String(Date.now()));
-      client.reconcile(link.project_id).catch(() => null);
-    }
+    // Fire the DAG once at start; subsequent /status polls read the DB
+    // row the DAG updates. Rate-limit lives in the backend (/reconcile
+    // debounces via last_status_polled_at), so rapid remounts don't need
+    // client-side guards. Failure is swallowed — the periodic 30-min DAG
+    // is our safety net.
+    client.reconcile(link.project_id).catch(() => null);
 
     let cancelled = false;
     const id = window.setInterval(async () => {

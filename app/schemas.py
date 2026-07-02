@@ -85,10 +85,13 @@ class HealthExIngestResponse(BaseModel):
 class HealthExReconcileResponse(BaseModel):
     """Response for POST .../reconcile — triggers healthex_reconcile DAG.
 
-    Same shape as HealthExIngestResponse but a distinct type so a future
-    schema change to either endpoint doesn't ripple to the other.
+    `debounced` is True when the backend suppressed the DAG trigger because
+    the row was reconciled (or otherwise polled) recently — `dag_run_id`
+    is None in that case. Callers treat both branches identically: refetch
+    /connections after a short delay to see the row state.
     """
     project_id: str
-    dag_run_id: str
+    dag_run_id: str | None = None
+    debounced: bool = False
 
 
