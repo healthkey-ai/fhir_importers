@@ -82,18 +82,3 @@ class HealthExIngestResponse(BaseModel):
     dag_run_id: str
 
 
-class HealthExRefreshResponse(BaseModel):
-    """Summary of a manual `POST .../refresh` pull.
-
-    Deliberately compact — the frontend only needs to display "we pulled
-    N resources of M types in T seconds". Per-page breakdowns and the raw
-    Bundle stay in the backend logs (see healthex_client.pull_everything).
-    """
-    project_id: str
-    healthex_patient_id: str
-    total_entries: int
-    pages: int
-    duration_ms: int
-    resource_type_counts: dict[str, int]
-    truncated: bool
-    synced_at: datetime

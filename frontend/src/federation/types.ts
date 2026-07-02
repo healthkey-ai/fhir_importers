@@ -99,17 +99,6 @@ export interface HealthExIngestResult {
   dag_run_id: string;
 }
 
-/** Summary of a manual POST /healthex/connections/{project_id}/refresh. */
-export interface HealthExRefreshResult {
-  project_id: string;
-  healthex_patient_id: string;
-  total_entries: number;
-  pages: number;
-  duration_ms: number;
-  resource_type_counts: Record<string, number>;
-  truncated: boolean;
-  synced_at: string;
-}
 
 export interface HealthExBaseProps {
   /** Authenticated HTTP client for the fhir-importers microservice. */

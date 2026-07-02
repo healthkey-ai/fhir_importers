@@ -210,28 +210,3 @@ async def test_ingest_401_when_no_bearer_token(
 
     assert resp.status_code == 401
     airflow_mock.create_dag_run.assert_not_awaited()
-
-
-# ---------------------------------------------------------------------- #
-# POST /healthex/connections/{project_id}/refresh — gate paths only.     #
-# Pull-path tests (paginated $everything + logging) are a separate       #
-# unshipped follow-up; these guard against 404/409 drift between         #
-# /ingest and /refresh.                                                  #
-# ---------------------------------------------------------------------- #
-
-async def test_refresh_404_when_no_link(http, bearer) -> None:
-    resp = await http.post(
-        f"/healthex/connections/{PROJECT_ID}/refresh", headers=bearer,
-    )
-    assert resp.status_code == 404
-
-
-async def test_refresh_409_when_patient_id_not_yet_resolved(
-    http, bearer, links_repo,
-) -> None:
-    await _seed_link(links_repo, patient_id=None, status=STATUS_PENDING_CONSENT)
-
-    resp = await http.post(
-        f"/healthex/connections/{PROJECT_ID}/refresh", headers=bearer,
-    )
-    assert resp.status_code == 409
