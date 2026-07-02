@@ -44,19 +44,41 @@ function HealthExConnectionsInner({
     try {
       const rows = await client.listConnections();
       setConnections(rows);
-      // Kick a HealthEx-side reconcile per row so revocations initiated on
-      // HealthEx's own UI (or fresh OPTED_IN records that landed since our
-      // last poll) surface without waiting for the periodic DAG tick.
-      // Fire-and-forget: the DAG updates our DB async, and we re-fetch a
-      // few times below to display the reconciled state.
+
+      // On-demand reconcile is only worth firing for rows still waiting on
+      // patient_id resolution (PENDING_CONSENT). Rows with healthex_patient_id
+      // already resolved get revocation checks from the periodic 30-min DAG
+      // tick — that's acceptable freshness and keeps every page refresh from
+      // spawning N Airflow tasks.
+      const needsReconcile = rows.filter((r) => !r.healthex_patient_id);
+      if (needsReconcile.length === 0) return;
+
+      // Per-project sessionStorage debounce guards against rapid refresh
+      // (dev, back-forward navigation) piling up redundant DAG runs.
+      const DEBOUNCE_MS = 30_000;
+      const now = Date.now();
+      const shouldReconcile = needsReconcile.filter((r) => {
+        const key = `healthex.reconcile.lastFired.${r.project_id}`;
+        const last = Number(sessionStorage.getItem(key)) || 0;
+        if (now - last < DEBOUNCE_MS) return false;
+        sessionStorage.setItem(key, String(now));
+        return true;
+      });
+      if (shouldReconcile.length === 0) return;
+
       await Promise.all(
-        rows.map((r) => client.reconcile(r.project_id).catch(() => null)),
+        shouldReconcile.map((r) =>
+          client.reconcile(r.project_id).catch(() => null),
+        ),
       );
+
       // Bounded polling: refetch listConnections up to N times with a
-      // small delay to let the DAG catch up. Stops early once each row's
-      // `last_status_polled_at` has advanced past the initial value.
+      // small delay to let the DAG catch up. Stops early once each
+      // reconciling row's `last_status_polled_at` has advanced.
       const initialPolled = new Map(
-        rows.map((r) => [r.project_id, r.last_status_polled_at] as const),
+        shouldReconcile.map(
+          (r) => [r.project_id, r.last_status_polled_at] as const,
+        ),
       );
       const POLL_MS = 3000;
       const POLL_MAX_ATTEMPTS = 5; // ~15s ceiling; DAG typically finishes in <10s
@@ -64,9 +86,13 @@ function HealthExConnectionsInner({
         await new Promise((resolve) => setTimeout(resolve, POLL_MS));
         const next = await client.listConnections();
         setConnections(next);
-        const allAdvanced = next.every(
-          (r) => r.last_status_polled_at !== initialPolled.get(r.project_id),
-        );
+        const allAdvanced = shouldReconcile.every((seed) => {
+          const current = next.find((n) => n.project_id === seed.project_id);
+          return (
+            current !== undefined
+            && current.last_status_polled_at !== initialPolled.get(seed.project_id)
+          );
+        });
         if (allAdvanced) break;
       }
     } catch (e: unknown) {

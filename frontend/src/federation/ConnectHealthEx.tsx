@@ -49,8 +49,15 @@ function ConnectHealthExInner({
 
     // Fire the DAG once at start; subsequent /status polls read the DB row
     // the DAG updates. Failure is swallowed — periodic reconcile is our
-    // safety net.
-    client.reconcile(link.project_id).catch(() => null);
+    // safety net. Same 30s sessionStorage debounce as HealthExConnections
+    // so rapid remounts (dev refresh, back-forward) don't pile up DAG runs.
+    const DEBOUNCE_MS = 30_000;
+    const key = `healthex.reconcile.lastFired.${link.project_id}`;
+    const last = Number(sessionStorage.getItem(key)) || 0;
+    if (Date.now() - last >= DEBOUNCE_MS) {
+      sessionStorage.setItem(key, String(Date.now()));
+      client.reconcile(link.project_id).catch(() => null);
+    }
 
     let cancelled = false;
     const id = window.setInterval(async () => {
