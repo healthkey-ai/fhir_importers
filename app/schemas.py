@@ -82,3 +82,13 @@ class HealthExIngestResponse(BaseModel):
     dag_run_id: str
 
 
+class HealthExReconcileResponse(BaseModel):
+    """Response for POST .../reconcile — triggers healthex_reconcile DAG.
+
+    Same shape as HealthExIngestResponse but a distinct type so a future
+    schema change to either endpoint doesn't ripple to the other.
+    """
+    project_id: str
+    dag_run_id: str
+
+

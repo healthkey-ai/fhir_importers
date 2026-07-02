@@ -210,3 +210,92 @@ async def test_ingest_401_when_no_bearer_token(
 
     assert resp.status_code == 401
     airflow_mock.create_dag_run.assert_not_awaited()
+
+
+# ---------------------------------------------------------------------- #
+# POST /healthex/connections/{project_id}/reconcile                      #
+# ---------------------------------------------------------------------- #
+# Sibling of /ingest — fires the healthex_reconcile DAG for a single row.
+# Not gated on patient_id (unlike /ingest) — reconcile is what resolves
+# PENDING_CONSENT rows.
+
+async def test_reconcile_happy_path_row_with_patient_id(
+    http, bearer, links_repo, airflow_mock,
+) -> None:
+    await _seed_link(links_repo, patient_id=PATIENT_ID)
+
+    resp = await http.post(
+        f"/healthex/connections/{PROJECT_ID}/reconcile", headers=bearer,
+    )
+
+    assert resp.status_code == 202
+    assert resp.json() == {
+        "project_id": PROJECT_ID,
+        "dag_run_id": "healthex-run-abc123",
+    }
+    airflow_mock.create_dag_run.assert_awaited_once()
+    kwargs = airflow_mock.create_dag_run.call_args.kwargs
+    assert kwargs["dag"] == "healthex_reconcile"
+    assert kwargs["dag_run_prefix"] == f"{UID}__{PROJECT_ID}"
+    # Reconcile conf carries only identifiers — no sync_mode, no since,
+    # no patient_id (the DAG resolves those from getPatientConsents).
+    assert kwargs["conf"] == {"user_uid": UID, "project_id": PROJECT_ID}
+
+
+async def test_reconcile_happy_path_pending_consent_row(
+    http, bearer, links_repo, airflow_mock,
+) -> None:
+    """A PENDING_CONSENT row (patient_id is None) must still trigger the DAG.
+    This is the primary callback-flow use case — the reconcile is what
+    resolves the patient_id and transitions the row."""
+    await _seed_link(
+        links_repo, patient_id=None, status=STATUS_PENDING_CONSENT,
+    )
+
+    resp = await http.post(
+        f"/healthex/connections/{PROJECT_ID}/reconcile", headers=bearer,
+    )
+
+    assert resp.status_code == 202
+    airflow_mock.create_dag_run.assert_awaited_once()
+
+
+async def test_reconcile_404_when_no_link(
+    http, bearer, airflow_mock,
+) -> None:
+    resp = await http.post(
+        f"/healthex/connections/{PROJECT_ID}/reconcile", headers=bearer,
+    )
+    assert resp.status_code == 404
+    airflow_mock.create_dag_run.assert_not_awaited()
+
+
+async def test_reconcile_502_when_airflow_trigger_fails(
+    http, bearer, links_repo, airflow_mock,
+) -> None:
+    await _seed_link(links_repo, patient_id=PATIENT_ID)
+    airflow_mock.create_dag_run.side_effect = AirflowError(
+        "Airflow unavailable",
+        url="http://airflow.internal:8080", method="post",
+    )
+
+    resp = await http.post(
+        f"/healthex/connections/{PROJECT_ID}/reconcile", headers=bearer,
+    )
+
+    assert resp.status_code == 502
+    detail = resp.json()["detail"]
+    assert detail == "Airflow trigger failed"
+    # Guard: internal Airflow host name must not leak in the client response.
+    assert "airflow.internal" not in detail
+
+
+async def test_reconcile_401_when_no_bearer_token(
+    http, links_repo, airflow_mock,
+) -> None:
+    await _seed_link(links_repo, patient_id=PATIENT_ID)
+
+    resp = await http.post(f"/healthex/connections/{PROJECT_ID}/reconcile")
+
+    assert resp.status_code == 401
+    airflow_mock.create_dag_run.assert_not_awaited()

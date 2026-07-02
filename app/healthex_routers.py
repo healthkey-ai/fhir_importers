@@ -19,11 +19,13 @@ from .schemas import (
     HealthExConnectRequest,
     HealthExIngestResponse,
     HealthExLinkResponse,
+    HealthExReconcileResponse,
     HealthExStatusResponse,
 )
 
 
 HEALTHEX_EXTRACT_DAG = "healthex_extract"
+HEALTHEX_RECONCILE_DAG = "healthex_reconcile"
 
 
 def get_airflow_client(request: Request) -> BaseAirflowClient:
@@ -350,6 +352,62 @@ async def ingest_connection(
         uid, project_id, link.healthex_patient_id, dag_run_id, conf["sync_mode"],
     )
     return HealthExIngestResponse(project_id=project_id, dag_run_id=dag_run_id)
+
+
+@router.post(
+    "/connections/{project_id}/reconcile",
+    response_model=HealthExReconcileResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def reconcile_connection(
+    project_id: str,
+    uid: str = Depends(get_current_user_uid),
+    repo: BaseHealthExLinksRepository = Depends(get_healthex_links_repo),
+    airflow: BaseAirflowClient = Depends(get_airflow_client),
+) -> HealthExReconcileResponse:
+    """Trigger the healthex_reconcile Airflow DAG for a single row.
+
+    Reconciles our healthex_patient_links row against HealthEx ground truth
+    (calls getPatientConsents, applies the transition table documented at
+    /home/nick/PycharmProjects/healthkey-etl/healthex.md §4). Fires-and-
+    forgets: returns 202 with dag_run_id; caller polls /connections until
+    `last_status_polled_at` advances.
+
+    NOT gated on `healthex_patient_id` (unlike /ingest) — reconcile is
+    precisely how a PENDING_CONSENT row discovers its patient_id and moves
+    to RETRIEVAL_IN_PROGRESS.
+    """
+    link = await repo.get(uid, project_id)
+    if link is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No HealthEx link for project: {project_id}",
+        )
+
+    conf = {"user_uid": uid, "project_id": project_id}
+    try:
+        dag_run_id = await airflow.create_dag_run(
+            dag=HEALTHEX_RECONCILE_DAG,
+            dag_run_prefix=_dag_run_prefix(uid, project_id),
+            conf=conf,
+        )
+    except AirflowError as exc:
+        # Full URL/method goes to Sentry via logger.exception; response body
+        # stays generic so the internal Airflow URL doesn't leak (same as /ingest).
+        _logger.exception(
+            "Failed to trigger %s DAG uid=%s project=%s",
+            HEALTHEX_RECONCILE_DAG, uid, project_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Airflow trigger failed",
+        ) from exc
+
+    _logger.info(
+        "healthex.reconcile.triggered uid=%s project=%s dag_run=%s",
+        uid, project_id, dag_run_id,
+    )
+    return HealthExReconcileResponse(project_id=project_id, dag_run_id=dag_run_id)
 
 
 def _map_upstream_status(upstream: str, current: str) -> str:
