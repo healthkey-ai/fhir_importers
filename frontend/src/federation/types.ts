@@ -130,14 +130,12 @@ export interface ConnectHealthExProps extends HealthExBaseProps {
   /**
    * Where HealthEx should redirect the browser after consent.
    *
-   * Appended verbatim to the patient-facing URL as `&redirectUri=<encoded>`.
-   * Must EXACTLY match a URL registered in the HealthEx project's "Redirect
-   * URLs" admin setting; otherwise the SPA logs a warning and falls through
-   * to its default close-the-tab behavior.
-   *
-   * Note: empirically, configuring Redirect URLs on the project side limits
-   * the available auth methods to CLEAR only (US-only NIST IAL2 verification).
-   * Omit this prop if your testers need Google/Microsoft sign-in.
+   * Set as the `redirectUri` search-param on the onboarding URL. Must
+   * EXACTLY match a URL registered in the HealthEx project's "Redirect
+   * URLs" admin setting; otherwise the SPA logs a warning and falls
+   * through to its default close-the-tab behavior. Admin-side config
+   * was solved with HealthEx in the 2026-07-01 meeting (Diego); no
+   * CLEAR-only restriction on the current setup.
    */
   redirectUri?: string;
   /** Called once the patient has consented and patient_id is resolved. */

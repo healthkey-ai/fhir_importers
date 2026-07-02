@@ -94,13 +94,13 @@ function ConnectHealthExInner({
       setLink(result);
       startedAtRef.current = null;
       if (result.onboarding_url) {
-        // HealthEx's SPA reads `redirectUri` from the URL's hash-query. The
-        // signed `xid` is already in the link as `?xid=...`; appending with
-        // `&` keeps it inside the same query string after the `#/`.
-        const url = redirectUri
-          ? `${result.onboarding_url}&redirectUri=${encodeURIComponent(redirectUri)}`
-          : result.onboarding_url;
-        window.open(url, "_blank", "noopener");
+        // HealthEx's SPA reads `redirectUri` from the URL's query params.
+        // Use URL.searchParams.set so we don't have to assume whether the
+        // onboarding URL already carries a `?xid=...` — matches the
+        // pattern healthtree-platform uses on the SvelteKit side.
+        const url = new URL(result.onboarding_url);
+        if (redirectUri) url.searchParams.set("redirectUri", redirectUri);
+        window.open(url.toString(), "_blank", "noopener");
       }
     } catch (e: unknown) {
       const err = e instanceof Error ? e : new Error(String(e));
